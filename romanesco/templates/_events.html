@@ -1,0 +1,26 @@
+{% for id, timestamp, comment, amount in events %}
+    {% if id is not none %} {# receipt #}
+        <a href="{{ url_for('receipt_edit', id=id) }}" class="log-entry receipt">
+            <div class="icon">&#x1f9fe;</div>
+            <div class="info">
+                <span>{{ comment or '(kvitto)' }}</span>
+                <span class="sm">{{ timestamp.strftime('%-d %b %H:%M') }}</span>
+            </div>
+            <div class="totals">
+                <span>{{ round(amount[session['user_id']]) }} <span>kr</span></span>
+                <span class="sm">({{ round(amount[0]) }} <span>kr</span>)</span>
+            </div>
+        </a>
+    {% else %} {# deposit #}
+        <div class="log-entry deposit">
+            <div class="icon">&#x1f4b3;</div>
+            <div class="info">
+                <span>{{ comment or '(insättning)' }}</span>
+                <span class="sm">{{ timestamp.strftime('%-d %b %H:%M') }}</span>
+            </div>
+            <div class="totals">
+                <span>{{ round(amount) }} <span>kr</span></span>
+            </div>
+        </div>
+    {% endif %}
+{% endfor %}

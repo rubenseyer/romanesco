@@ -4,6 +4,7 @@ from ..util import *
 
 def parse(txt):
     lines = txt.splitlines()
+    comment = lines[2]
     i = 0
     while not lines[i].startswith('Datum'):
         i += 1
@@ -21,10 +22,12 @@ def parse(txt):
     # Start of items
     items = []
     while not lines[i].startswith('Total:'):
-        if '.' in lines[i+4]:
+        if lines[i] == 'Delavstämning korrekt':
+            i += 2
+        elif '.' in lines[i+4]:
             # Normal entry
             n, ean, p, q = lines[i:i+7:2]
-            items.append((n, parse_decimal(q), parse_decimal(p), ean))
+            items.append((n.lstrip('*'), parse_decimal(q), parse_decimal(p), ean))
             i += 10
             if n.startswith('*') and lines[i+2].startswith('-'):
                 i += 4
@@ -38,7 +41,7 @@ def parse(txt):
             raise NotImplementedError
     i += 2
     assert sum(round(q*p) for _, q, p, _ in items) == parse_decimal(lines[i])
-    return timestamp, items
+    return timestamp, comment, items
 
 
 def identify(txt):

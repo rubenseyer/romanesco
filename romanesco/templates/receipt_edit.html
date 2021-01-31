@@ -1,0 +1,176 @@
+{% extends "_base.html" %}
+{% block title %}Redigera kvitto &mdash; Romanesco{% endblock %}
+{% block head %}
+    <link href="{{ url_for('static', filename='styles-receipt.css') }}" rel="stylesheet">
+{% endblock %}
+{% block body %}
+    <div>
+        <!-- TODO -->
+        {% set action = url_for('receipt_edit', id=receipt.id) if committed else url_for('receipt_new') %}
+        <form id="receipt-form" action="{{ action }}" method=post enctype=multipart/form-data data-id="{{ receipt.id if committed }}">
+            <input type="text" id="comment" name="comment" value="{{ receipt.comment if receipt is not none }}">
+            <input type="datetime-local" id="timestamp" name="timestamp" value="{{ (receipt.timestamp if receipt is not none else now()).strftime('%Y-%m-%dT%H:%M:00') }}">
+            <div id="items">
+                <div class="items-header">
+                    <span>Namn</span>
+                    <span>Antal</span>
+                    <span>À-pris</span>
+                    <span>Summa</span>
+                    <div class="splits">
+                        {% for name in users.values() %}
+                        <span>{{ name[0] }}</span>
+                        {% endfor %}
+                    </div>
+                    <span>Kategori</span>
+                    <a id="new-item" href="#">+</a>
+                </div>
+                {% if receipt is not none %}
+                {% for item in receipt.items %}
+                <div role="group" data-id="{{ item.id or '' }}" data-ean="{{ item.ean or '' }}">
+                    <input type="text" name="iname" value="{{ item.name }}">
+                    <input type="text" name="quantity" value="{{ item.quantity }}" pattern="[0-9]+(\.[0-9]+)?">
+                    <input type="text" name="price" value="{{ item.price }}" pattern="-?[0-9]+(\.[0-9]+)?">
+                    <span class="total">{{ item.total() }}</span>
+                    <div class="splits">
+                        {% for id in users.keys() %}
+                        <input type="number" name="split[]" value="{{ item.splits[id - 1] if item.splits }}" min="0">
+                        {% endfor %}
+                    </div>
+                    <select name="category" required>
+                        {% for id, name in categories.items() %}
+                        <option value="{{ id }}" {{ 'selected' if item.category == id }}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <a data-action="del-item" href="#">&ndash;</a>
+                </div>
+                {% endfor %}
+                {% endif %}
+                <div class="items-footer">
+                    <span class="total">{{ receipt.total() if receipt is not none else '0.00' }}</span>
+                    <div class="splits">
+                        {% for id in users.keys() %}
+                        <span>{{ round(receipt.split_total(id)) if receipt is not none else '0.00' }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <input type="submit" value="{{ 'Uppdatera' if committed else 'Skapa' }}">
+            </div>
+        </form>
+    </div>
+    <div id="dom-templates">
+        <div role="group" data-id="" data-ean="">
+            <input type="text" name="iname" value="">
+            <input type="text" name="quantity" value="" pattern="[0-9]+(\.[0-9]+)?">
+            <input type="text" name="price" value="" pattern="-?[0-9]+(\.[0-9]+)?">
+            <span class="total">&ndash;</span>
+            <div class="splits">
+                {% for id in users.keys() %}
+                    <input type="number" name="split[]" value="" pattern="([1-9][0-9]*)?" min="0">
+                {% endfor %}
+            </div>
+            <select name="category" required>
+                {% for id, name in categories.items() %}
+                    <option value="{{ id }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+            <a data-action="del-item" href="#">&ndash;</a>
+        </div>
+    </div>
+    <script>
+        'use strict';
+        const committed = {{ 'true' if committed else 'false' }}
+        const form = document.getElementById('receipt-form')
+        const items = document.getElementById('items')
+        const itemNode = document.querySelector('#dom-templates div[role=group]')
+
+        const extractSplits = item => {
+            let inputs = [...item.querySelectorAll('input[name="split[]"]')]
+            let splits = inputs.map(s => s.value ? parseInt(s.value) : 0)
+            return !splits.every(s => s === 0) ? splits : []
+        }
+        form.addEventListener('submit', e => {
+            e.preventDefault()
+            // format into object
+            let data = {}
+            data = {}
+            data.id = parseInt(form.dataset.id) || null
+            data.comment = form.querySelector('input[name=comment]').value
+            data.timestamp = +new Date(form.querySelector('input[name=timestamp]').value)/1000
+            data.items = [...items.querySelectorAll('div[role=group]:not(.struck)')].map(item => ({
+                id: !item.classList.contains('dirty') && item.dataset.id || null,
+                name: item.querySelector('input[name=iname]').value,
+                quantity: item.querySelector('input[name=quantity]').value,
+                price: item.querySelector('input[name=price]').value,
+                ean: item.dataset.ean || null,
+                category: item.querySelector('select').value,
+                splits: extractSplits(item)
+            }))
+            data.deletedItems = committed ? [...items.querySelectorAll('div[role=group].struck, div[role=group].dirty')].map(item => item.dataset.id) : []
+
+            fetch(form.action, {
+                credentials: 'same-origin',
+                mode: 'same-origin',
+                method: form.method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(response => window.location = response.url)
+        })
+
+        document.getElementById('new-item').addEventListener('click', e => {
+           e.preventDefault()
+           items.insertBefore(itemNode.cloneNode(true), items.getElementsByClassName('items-footer')[0])
+        })
+
+        items.addEventListener('change', e => {
+            e.stopPropagation()
+            if (['iname', 'category'].includes(e.target.name) && e.target.parentElement.dataset.id) {
+                e.target.parentElement.classList.add('dirty')
+            } else if (e.target.name === 'split[]' && e.target.parentElement.parentElement.dataset.id) {
+                e.target.parentElement.parentElement.classList.add('dirty')
+            }
+            // recalculate: just do it all to reduce errors
+            let total = 0, split_totals = []
+            const splits_spans = items.querySelectorAll('.items-footer .splits span')
+            for (let i = 0; i < splits_spans.length; i++)
+                split_totals[i] = 0
+            for (const item of items.querySelectorAll('div[role=group]')) {
+                let quantity = item.querySelector('input[name=quantity]').value
+                let price = item.querySelector('input[name=price]').value
+                let ltotal = (parseFloat(quantity)*parseFloat(price)).toFixed(2);
+                item.querySelector('span.total').textContent = ltotal;
+                total += parseFloat(ltotal);
+                let splits = [...item.querySelectorAll('input[name="split[]"]')].map(s => s.value ? parseInt(s.value) : 1)
+                let ssplits = splits.reduce((a,b)=>a+b, 0)
+                //console.log(splits,ssplits)
+                for (let i = 0; i < splits.length; i++)
+                    split_totals[i] += parseFloat(ltotal) * splits[i] / ssplits
+            }
+            items.querySelector('.items-footer span.total').textContent = total.toFixed(2)
+            for (let i = 0; i < splits_spans.length; i++)
+                splits_spans[i].textContent = split_totals[i].toFixed(2)
+        })
+
+        items.addEventListener('click', e => {
+            if (e.target.tagName !== 'A' || e.target.dataset.action !== 'del-item') return
+            e.preventDefault()
+            let parent = e.target.parentElement
+            if (parent.dataset.id && committed) {
+                if (parent.classList.contains('struck')) {
+                    // restore
+                    parent.classList.remove('struck')
+                    parent.querySelectorAll('input').forEach(el => el.disabled = false)
+                } else {
+                    // deleting stored element
+                    parent.classList.add('struck')
+                    parent.querySelectorAll('input').forEach(el => el.disabled = true)
+                }
+            } else {
+                // local, just delete
+                parent.remove()
+            }
+        })
+    </script>
+{% endblock %}

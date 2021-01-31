@@ -1,0 +1,27 @@
+{% extends "_base.html" %}
+{% block title %}Romanesco{% endblock %}
+{% block head %}
+    <style>
+        #login {
+            text-align: center;
+            background-color: var(--bg-accent);
+            color: var(--fg-accent);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: auto;
+            width: 100%;
+        }
+        ul { list-style-type: none; }
+    </style>
+{% endblock %}
+{% block body %}
+    <div id="login">
+        <h1>Romanesco</h1>
+        <ul>
+            {% for id, name in users.items() %}
+            <li><a href="{{ url_for('login', user_id=id) }}">{{ name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

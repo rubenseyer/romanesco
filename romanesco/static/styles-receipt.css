@@ -1,0 +1,36 @@
+input:invalid { color: var(--fg-red); }
+#receipt-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: .5rem;
+    font-size: 0.75rem;
+}
+#receipt-form input {
+    font-size: inherit;
+}
+#receipt-form #items {
+    display: grid;
+    width: auto;
+    grid-template-columns: 3fr repeat(3, 4rem) 2fr 2fr auto;
+    gap: .5rem;
+}
+#receipt-form #items > div {
+    display: contents;
+}
+#receipt-form #items .dirty input { font-style: italic; }
+#receipt-form #items .struck input { text-decoration: line-through; }
+#items .struck input:not([name=iname]), #items .struck select, #items .struck span, #items .struck div { visibility: hidden; }
+#receipt-form #items .splits {
+    display: flex;
+    gap: .5rem;
+}
+#receipt-form #items .splits > * {
+    width: 4rem;
+}
+#dom-templates { display: none; }
+#receipt-form a { text-decoration: none; }
+#receipt-form a:hover { text-decoration: underline; }
+#receipt-form .items-header, #receipt-form .items-footer  { font-weight: 700; }
+#receipt-form .items-footer { font-size: 0.8rem; }
+#receipt-form .items-footer .total { grid-column: 4; }

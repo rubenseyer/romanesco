@@ -5,9 +5,10 @@ from ..util import *
 
 def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
     lines = txt.splitlines()
+    comment = lines[0].strip() + ' ' + lines[1].strip()
     i = 0
-    # Advance until === separator
-    while not lines[i].startswith('='):
+    # Advance until --- separator
+    while not lines[i].startswith('-'):
         i += 1
     i += 1
     # Read products until next separator
@@ -15,15 +16,22 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
     quantity = None
     price = None
     items = []
-    while lines:
+    while i < len(lines):
         line = lines[i]
         i += 1
         # No hanging indent -> close item
         if name is not None and not line.startswith(' '):
+            if quantity is None:
+                quantity = Decimal(0)
+            if price is None:
+                price = Decimal(0)
             items.append((name, quantity, price, None))
             name = quantity = price = None
-        # Stop at next === separator
+        # Skip any === separators
         if line.startswith('='):
+            continue
+        # Stop at next --- separator
+        if line.startswith('-'):
             break
         seg = re.split('  +', line)  # Segments by spacing
         # Unindented
@@ -52,18 +60,20 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
                         price += parse_decimal(seg[2])
             # Quantified
             elif '*' in seg[1]:
-                quantity, newp = _starexpr(seg[1])
-                assert round(quantity*newp) == price if price is not None else parse_decimal(seg[2])
-                price = newp
+                total_price = price if price is not None else parse_decimal(seg[2])
+                quantity, price = _starexpr(seg[1])
+                if round(quantity*price) != total_price:
+                    # rounding failed??? try to fix price, because we are working with decimal quantities
+                    price = tol_div(total_price, quantity)
     # Read total
     while 'SEK' not in lines[i]:
         i += 1
-    total = parse_decimal(lines[i].split()[1])
-    # Read timestamp
-    timestamp = ymdhm_to_dt(*lines[-3].split()[2:4])
+    total = parse_decimal(lines[i].split()[-2])
+    # Read timestamp (last non-empty line)
+    timestamp = ymdhm_to_dt(*next(filter(None, lines[::-1])).split()[2:4])
     # Done
     assert sum(round(q*p) for _, q, p, _ in items) == total
-    return timestamp, items
+    return timestamp, comment, items
 
 
 def identify(txt):
