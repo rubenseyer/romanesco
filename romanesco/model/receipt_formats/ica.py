@@ -1,5 +1,5 @@
 from pdfminer.layout import LAParams
-from ..util import *
+from ...util import *
 
 
 def parse(txt):

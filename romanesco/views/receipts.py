@@ -1,15 +1,15 @@
 from io import BufferedReader
 from datetime import datetime
 from decimal import Decimal
-from flask import render_template, request, redirect, url_for, abort, session
-from ..model import users, categories, parse_receipt, Receipt, stats_new_receipt, stats_update_receipt, round
+from flask import render_template, request, redirect, url_for, abort
+from ..model import users, categories, parse_receipt, Receipt, stats_new_receipt, stats_update_receipt
 from .. import app, db
 
 
 @app.route('/receipt/new', methods=['GET', 'POST'])
 def receipt_new():
     if request.method == 'GET':
-        return render_template('receipt_edit.html', receipt=None, committed=False, users=users(), categories=categories(), round=round)
+        return render_template('receipt_edit.html', receipt=None, committed=False, users=users(), categories=categories())
     # FUTURE: fix csrf
     d = request.json
     print(d)
@@ -30,7 +30,7 @@ def receipt_new():
 def receipt_edit(id):
     r = Receipt.get(id)
     if request.method == 'GET':
-        return render_template('receipt_edit.html', receipt=r, committed=True, users=users(), categories=categories(), round=round)
+        return render_template('receipt_edit.html', receipt=r, committed=True, users=users(), categories=categories())
     # FUTURE: fix csrf
     # POST update to working receipt:
     d = request.json
@@ -62,7 +62,7 @@ def receipt_upload():
         # empty part with filename; no file submitted (in some browsers)
         return render_template('receipt_upload.html', error='Fel: ingen fil')
     receipt = parse_receipt(BufferedReader(file))
-    return render_template('receipt_edit.html', receipt=receipt, committed=False, users=users(), categories=categories(), round=round)
+    return render_template('receipt_edit.html', receipt=receipt, committed=False, users=users(), categories=categories())
 
 
 def _process_items_json(r: Receipt, items_json: list):

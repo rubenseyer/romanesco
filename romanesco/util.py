@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP, ROUND_DOWN
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime
 
 

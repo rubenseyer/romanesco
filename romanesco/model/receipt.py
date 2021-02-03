@@ -3,8 +3,8 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Union, Optional
 from .lookups import users
-from .util import round, splits_from_str
 from .receipt_formats import parse
+from ..util import round, splits_from_str
 from .. import db
 
 

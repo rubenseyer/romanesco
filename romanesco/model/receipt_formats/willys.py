@@ -1,6 +1,6 @@
 import re
 from pdfminer.layout import LAParams
-from ..util import *
+from ...util import *
 
 
 def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):

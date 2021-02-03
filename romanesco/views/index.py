@@ -1,5 +1,6 @@
 from flask import request, render_template, session, redirect, url_for, abort
-from ..model import users, stats_overview, events, round
+from ..model import users, stats_overview, events
+from ..util import round
 from .. import app
 
 
