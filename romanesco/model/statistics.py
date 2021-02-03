@@ -4,6 +4,7 @@ from math import floor
 from typing import Optional
 
 from .. import db
+from ..model import users
 from .receipt import Receipt
 
 
@@ -38,13 +39,29 @@ def stats_overview(user_id: int):
     return current_month, avg_this_day, net, sorted(category_stats.items(), key=lambda x: -x[1])
 
 
+def stats_full_recompute():
+    with db:
+        c = db.cursor()
+
+        # Reset all statistics
+        c.execute('delete from stats_total; delete from stats_avg; update users set net = \'0\';')
+
+        # Recompute all
+        for user_id, amount_str in c.execute('select user_id, amount from deposits order by rowid'):
+            stats_new_deposit(user_id, Decimal(amount_str))
+        for rid in c.execute('select id from receipts order by rowid'):
+            r = Receipt.get(rid[0])
+            r.recalculate(cache=True)
+            stats_new_receipt(r, future_blind=True)
+
+
 def stats_new_deposit(user_id: int, amount: Decimal):
     with db:
         c = db.cursor()
         _inc_net(c, user_id, amount)
 
 
-def stats_new_receipt(r: Receipt):
+def stats_new_receipt(r: Receipt, future_blind=False):
     totals = __extract_totals(r)
     with db:
         c = db.cursor()
@@ -53,7 +70,7 @@ def stats_new_receipt(r: Receipt):
             _inc_net(c, i, -totals[None][i])
             for category, total in totals.items():
                 _inc_total(c, i, category, r.timestamp.year, r.timestamp.month, total[i])
-                _obs_avg(c, r.id, i, category, r.timestamp, total[i])
+                _obs_avg(c, r.id, i, category, r.timestamp, total[i], future_blind=future_blind)
 
 
 def stats_update_receipt(r_old: Receipt, r_new: Receipt):
@@ -135,7 +152,7 @@ def _inc_total(c: 'db.Cursor', user_id: int, category_id: int, year: int, month:
                   (str(total), user_id, category_id, year, month))
 
 
-def _obs_avg(c: 'db.Cursor', receipt_id: int, user_id: int, category_id: int, ts: datetime, amount: Decimal, obs: int = 1):
+def _obs_avg(c: 'db.Cursor', receipt_id: int, user_id: int, category_id: int, ts: datetime, amount: Decimal, obs: int = 1, future_blind = False):
     row = c.execute('select avg from stats_avg where user_id = ? and category_id is ? and day = ?',
                     (user_id, category_id, ts.day)).fetchone()
     avg = Decimal(row[0] if row is not None else '0')
@@ -143,8 +160,12 @@ def _obs_avg(c: 'db.Cursor', receipt_id: int, user_id: int, category_id: int, ts
                           (user_id, ts.day)), (0,))[0]
     cum_avg = Decimal(next(c.execute('select cum_avg from stats_avg where user_id = ? and category_id is ? and day < ? order by day desc limit 1',
                                      (user_id, category_id, ts.day)), (0,))[0] if ts.day > 1 else '0')
-    count_others = c.execute('select count(rowid) from receipts where id != ? and date(timestamp,\'unixepoch\') == ?',
-                             (receipt_id, ts.date().isoformat())).fetchone()[0]
+    if not future_blind:
+        count_others = c.execute('select count(rowid) from receipts where id != ? and date(timestamp,\'unixepoch\') == ?',
+                                 (receipt_id, ts.date().isoformat())).fetchone()[0]
+    else:
+        count_others = c.execute('select count(rowid) from receipts where id < ? and date(timestamp,\'unixepoch\') == ?',
+                                 (receipt_id, ts.date().isoformat())).fetchone()[0]
     if count_others == 0:
         avg = (nobs*avg + amount)/(nobs + obs)
         nobs += obs

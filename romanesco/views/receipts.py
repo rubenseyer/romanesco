@@ -41,11 +41,12 @@ def receipt_edit(id):
         timestamp = datetime.fromtimestamp(d['timestamp'])
         if r.timestamp != timestamp or r.comment != d['comment']:
             r.update_tc(timestamp, d['comment'])
+        r.items = []
         _process_items_json(r, d['items'])
         for tbd in d['deletedItems']:
             r.delete_item(tbd)
-        r.recalculate(cache=True)
         print(r)
+        r.recalculate(cache=True)
         stats_update_receipt(r_old, r)
     return redirect(url_for('overview'))
 
