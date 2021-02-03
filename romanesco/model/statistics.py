@@ -60,13 +60,13 @@ def stats_update_receipt(r_old: Receipt, r_new: Receipt):
     totals_old = __extract_totals(r_old)
     totals_new = __extract_totals(r_new)
     totals_delta = {}
-    for category in set(*totals_old.keys(), *totals_new.keys()):
+    for category in {*totals_old.keys(), *totals_new.keys()}:
         if category not in totals_new:
             totals_delta[category] = [-x for x in totals_old[category]]
         elif category not in totals_old:
             totals_delta[category] = totals_new[category]
         else:
-            totals_delta[category] = list(map(lambda a, b: a - b, zip(totals_new[category], totals_old[category])))
+            totals_delta[category] = list(map(lambda z: z[0] - z[1], zip(totals_new[category], totals_old[category])))
     same_year = r_new.timestamp.year == r_old.timestamp.year
     same_month = r_new.timestamp.month == r_old.timestamp.month
     same_day = r_new.timestamp.day == r_old.timestamp.day
