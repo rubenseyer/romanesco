@@ -39,6 +39,18 @@ def stats_overview(user_id: int):
     return current_month, avg_this_day, net, sorted(category_stats.items(), key=lambda x: -x[1])
 
 
+def stats_all_category_stats(user_id: int):
+    c = db.cursor()
+    category_stats = {}
+    rows = c.execute(
+        'select year, month, c.name, total from stats_total left join categories c on category_id = c.id where user_id = ? and category_id is not null',
+        (user_id,))
+    for year, month, name, rtotal in rows:
+        cat = category_stats.setdefault(f'{year}.{month}', dict())
+        cat[name] = floor(Decimal(rtotal))
+    return category_stats
+
+
 def stats_full_recompute():
     with db:
         c = db.cursor()

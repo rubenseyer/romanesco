@@ -1,0 +1,18 @@
+{% extends "_base.html" %}
+{% block title %}Statistik &mdash; Romanesco{% endblock %}
+{% block body %}
+    {% for ts, category_stats2 in statistics.items()|sort(attribute='0', reverse=true) %}
+    <div>
+        <div>{{ ts }}</div>
+        <div id="cats">
+            {% for category, value in category_stats2.items()|sort(attribute='0') %}
+            <div>
+                <div>{{ category }}</div>
+                <div><span class="amount">{{ value }}</span>&nbsp;<span class="currency">kr</span></div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+    {% endfor %}
+{% endblock body %}
