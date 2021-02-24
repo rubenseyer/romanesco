@@ -32,7 +32,10 @@ def parse(txt):
             if n.startswith('*') and lines[i+2].startswith('-'):
                 i += 4
         elif '.' in lines[i+6] and lines[i+4][0].isdigit():
-            # No EAN; usually return, which is already accounted for
+            # No EAN; usually return fee, which is already accounted for
+            # However, return fees paid back must be added.
+            if lines[i].startswith('Pantretur'):
+                items.append(('Pant', Decimal(1), parse_decimal(lines[i+6]), None))
             i += 8
         elif '.' in lines[i+2]:
             # Special, which is already accounted for
