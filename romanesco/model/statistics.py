@@ -184,7 +184,7 @@ def _obs_avg(c: 'db.Cursor', receipt_id: int, user_id: int, category_id: int, ts
         avg = (nobs * avg + amount) / nobs
     cum_avg += avg
     if row is None:
-        c.execute('insert into stats_avg (cum_avg, avg, user_id, category_id, day, nobs) values (?,?,?,?,?,?)',
+        c.execute('insert into stats_avg (cum_avg, avg, nobs, user_id, category_id, day) values (?,?,?,?,?,?)',
                   (str(cum_avg), str(avg), nobs, user_id, category_id, ts.day))
     else:
         c.execute('update stats_avg set cum_avg = ?, avg = ?, nobs = ? where user_id = ? and category_id is ? and day = ?',
