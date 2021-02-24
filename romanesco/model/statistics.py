@@ -4,7 +4,6 @@ from math import floor
 from typing import Optional
 
 from .. import db
-from ..model import users
 from .receipt import Receipt
 
 
@@ -185,14 +184,11 @@ def _obs_avg(c: 'db.Cursor', receipt_id: int, user_id: int, category_id: int, ts
         avg = (nobs * avg + amount) / nobs
     cum_avg += avg
     if row is None:
-        c.execute('insert into stats_avg (cum_avg, avg, user_id, category_id, day) values (?,?,?,?,?)',
-                  (str(cum_avg), str(avg), user_id, category_id, ts.day))
+        c.execute('insert into stats_avg (cum_avg, avg, user_id, category_id, day, nobs) values (?,?,?,?,?,?)',
+                  (str(cum_avg), str(avg), nobs, user_id, category_id, ts.day))
     else:
-        c.execute('update stats_avg set cum_avg = ?, avg = ? where user_id = ? and category_id is ? and day = ?',
-                  (str(cum_avg), str(avg), user_id, category_id, ts.day))
-    if category_id is None:
-        c.execute('update stats_avg set nobs = ? where user_id = ? and category_id is null and day = ?',
-                  (nobs, user_id, ts.day))
+        c.execute('update stats_avg set cum_avg = ?, avg = ?, nobs = ? where user_id = ? and category_id is ? and day = ?',
+                  (str(cum_avg), str(avg), nobs, user_id, category_id, ts.day))
 
     future_avg_rows = c.execute('select day, avg from stats_avg where user_id = ? and category_id is ? and day > ? order by day',
                                  (user_id, category_id, ts.day))

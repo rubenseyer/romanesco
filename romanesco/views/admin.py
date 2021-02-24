@@ -3,7 +3,7 @@ from ..model.statistics import stats_full_recompute, stats_all_category_stats
 from .. import app
 
 
-@app.route('/debug_stats_recompute')
+@app.route('/debug/stats_recompute')
 def debug_stats_recompute():
     if 'user_id' not in session:
         return abort(401)
