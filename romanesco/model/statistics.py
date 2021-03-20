@@ -46,7 +46,7 @@ def stats_all_category_stats(user_id: int):
         (user_id,))
     for year, month, name, rtotal in rows:
         cat = category_stats.setdefault(f'{year}.{month}', dict())
-        cat[name] = floor(Decimal(rtotal))
+        cat[name] = Decimal(rtotal)
     return category_stats
 
 
