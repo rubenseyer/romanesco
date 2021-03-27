@@ -24,6 +24,9 @@ def parse(txt):
     while not lines[i].startswith('Total:'):
         if lines[i] == 'Delavstämning korrekt':
             i += 2
+        elif lines[i] == 'Stammisrabatt ICA':
+            # Already accounted for in the totals.
+            i += 6
         elif '.' in lines[i+4]:
             # Normal entry
             n, ean, p, q = lines[i:i+7:2]
