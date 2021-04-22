@@ -46,7 +46,7 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
         # Indented
         else:
             # Promo
-            if (':' in seg[1] or seg[1].startswith('Prisnedsättning')) and len(seg) == 3:
+            if (':' in seg[1] or seg[1].startswith('Prisnedsättning') or seg[1].startswith('Nytt pris')) and len(seg) == 3:
                 price += parse_decimal(seg[2]) / quantity
             # Addon
             elif '+' in seg[1]:
