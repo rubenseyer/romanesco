@@ -19,6 +19,9 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
     while i < len(lines):
         line = lines[i]
         i += 1
+        # Filter useless note
+        if line.startswith('Utförsäljning'):
+            continue
         # No hanging indent -> close item
         if name is not None and not line.startswith(' '):
             if quantity is None:
