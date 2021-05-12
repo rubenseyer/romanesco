@@ -30,7 +30,7 @@ def parse(txt):
         elif '.' in lines[i+4]:
             # Normal entry
             n, ean, p, q = lines[i:i+7:2]
-            items.append((n.lstrip('*'), parse_decimal(q), parse_decimal(p), ean))
+            items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
             i += 10
             if n.startswith('*') and lines[i+2].startswith('-'):
                 i += 4
