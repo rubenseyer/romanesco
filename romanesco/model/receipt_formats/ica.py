@@ -32,7 +32,7 @@ def parse(txt):
             n, ean, p, q = lines[i:i+7:2]
             items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
             i += 10
-            if n.startswith('*') and lines[i+2].startswith('-'):
+            if n.startswith('*') and lines[i+2].startswith('-') and lines[i] != 'Stammisrabatt ICA':
                 i += 4
         elif '.' in lines[i+6] and lines[i+4][0].isdigit():
             # No EAN; usually return fee, which is already accounted for
