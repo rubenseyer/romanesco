@@ -22,7 +22,7 @@ def parse(txt):
     # Start of items
     items = []
     while not lines[i].startswith('Total:'):
-        if lines[i] == 'Delavstämning korrekt':
+        if lines[i] == 'Delavstämning korrekt' or lines[i] == 'Avstämning korrekt.':
             i += 2
         elif lines[i] == 'Stammisrabatt ICA':
             # Already accounted for in the totals.
