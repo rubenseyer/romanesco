@@ -68,7 +68,7 @@
             <span class="total">&ndash;</span>
             <div class="splits">
                 {% for id in users.keys() %}
-                    <input type="number" name="split[]" value="" pattern="([1-9][0-9]*)?" min="0">
+                    <input type="number" name="split[]" value="" pattern="[0-9]*" min="0">
                 {% endfor %}
             </div>
             <select name="category" required>
@@ -139,12 +139,14 @@
             for (const item of items.querySelectorAll('div[role=group]')) {
                 let quantity = item.querySelector('input[name=quantity]').value
                 let price = item.querySelector('input[name=price]').value
-                let ltotal = (parseFloat(quantity)*parseFloat(price)).toFixed(2);
-                item.querySelector('span.total').textContent = ltotal;
+                let ltotal = (parseFloat(quantity)*parseFloat(price)).toFixed(2)
+                item.querySelector('span.total').textContent = ltotal
                 total += parseFloat(ltotal);
-                let splits = [...item.querySelectorAll('input[name="split[]"]')].map(s => s.value ? parseInt(s.value) : 1)
+                let splits = extractSplits(item)
+                if (splits.length === 0)
+                    splits = Array(splits_spans.length).fill(1)  // empty interpretation
                 let ssplits = splits.reduce((a,b)=>a+b, 0)
-                //console.log(splits,ssplits)
+                console.log(splits,ssplits)
                 for (let i = 0; i < splits.length; i++)
                     split_totals[i] += parseFloat(ltotal) * splits[i] / ssplits
             }
