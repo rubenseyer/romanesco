@@ -58,13 +58,11 @@ create table if not exists stats_total (
     foreign key(user_id) references users(id),
     foreign key(category_id) references categories(id)
 );
-create table if not exists stats_avg (
+create table if not exists stats_days (
     user_id     integer not null,
     category_id integer,
     day         integer not null,
-    cum_avg     text not null,
-    avg         text not null,
-    nobs        integer default null,
+    total       text not null,
     primary key(user_id, category_id, day),
     foreign key(user_id) references users(id),
     foreign key(category_id) references categories(id)
