@@ -25,6 +25,12 @@ def events_fetch():
 @app.route('/login/<int:user_id>')
 def login(user_id=None):
     users_dict = users()
+    basic_auth_name = request.headers.get('X-Remote-User')
+    if basic_auth_name is not None:
+        for id, name in users_dict.items():
+            if name.lower() == basic_auth_name:
+                user_id = id
+                break
     if user_id is None:
         return render_template('login.html', users=users_dict)
     if user_id not in users_dict:
