@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_EVEN, ROUND_HALF_UP
 from datetime import datetime
 
 
@@ -8,6 +8,10 @@ def parse_decimal(s: str) -> Decimal:
 
 def round(d: Decimal, prec=Decimal('0.01')) -> Decimal:
     return d.quantize(prec, ROUND_HALF_UP)
+
+
+def round_even(d: Decimal, prec=Decimal('0.01')) -> Decimal:
+    return d.quantize(prec, ROUND_HALF_EVEN)
 
 
 def tol_div(num: Decimal, den: Decimal) -> Decimal:

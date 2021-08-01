@@ -1,6 +1,5 @@
 from flask import request, render_template, session, redirect, url_for, abort
 from ..model import users, stats_overview, events
-from ..util import round
 from .. import app
 
 
@@ -18,7 +17,7 @@ def events_fetch():
     if 'user_id' not in session:
         return abort(401)
     page = request.args.get('page', 0, type=int)
-    return render_template('_events.html', events=events(session['user_id'], page=page), round=round)
+    return render_template('_events.html', events=events(session['user_id'], page=page))
 
 
 @app.route('/login')
