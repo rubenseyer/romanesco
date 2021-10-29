@@ -54,6 +54,15 @@ def stats_all_category_stats(user_id: int):
         'select year, month, c.name, total from stats_total left join categories c on category_id = c.id where user_id = ? and category_id is not null',
         (user_id,))
     for year, month, name, rtotal in rows:
-        cat = category_stats.setdefault(f'{year}.{month}', dict())
+        cat = category_stats.setdefault((year, month), dict())
         cat[name] = Decimal(rtotal)
     return category_stats
+
+
+def stats_all_totals():
+    c = db.cursor()
+    total_stats = {}
+    rows = c.execute('select year, month, total from stats_total where category_id is null')
+    for year, month, rtotal in rows:
+        total_stats[(year, month)] = total_stats.get((year, month), 0) + rtotal
+    return total_stats
