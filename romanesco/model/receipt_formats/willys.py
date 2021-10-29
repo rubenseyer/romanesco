@@ -72,8 +72,14 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
     while 'SEK' not in lines[i]:
         i += 1
     total = parse_decimal(lines[i].split()[-2])
-    # Read timestamp (last non-empty line)
-    timestamp = ymdhm_to_dt(*next(filter(None, lines[::-1])).split()[2:4])
+    # Read timestamp
+    # Used to be last non-empty line. Now its better to look backwards for "Kassa:"
+    for line in filter(None, reversed(lines)):
+        if line.startswith('Kassa:'):
+            timestamp = ymdhm_to_dt(*next(filter(None, lines[::-1])).split()[2:4])
+            break
+    else:
+        timestamp = datetime(1970, 1, 1, 00, 00)
     # Done
     assert sum(round(q*p) for _, q, p, _ in items) == total
     return timestamp, comment, items
