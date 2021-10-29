@@ -64,5 +64,5 @@ def stats_all_totals():
     total_stats = {}
     rows = c.execute('select year, month, total from stats_total where category_id is null')
     for year, month, rtotal in rows:
-        total_stats[(year, month)] = total_stats.get((year, month), 0) + rtotal
+        total_stats[(year, month)] = total_stats.get((year, month), 0) + Decimal(rtotal)
     return total_stats
