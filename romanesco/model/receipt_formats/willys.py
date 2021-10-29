@@ -76,7 +76,7 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
     # Used to be last non-empty line. Now its better to look backwards for "Kassa:"
     for line in filter(None, reversed(lines)):
         if line.startswith('Kassa:'):
-            timestamp = ymdhm_to_dt(*next(filter(None, lines[::-1])).split()[2:4])
+            timestamp = ymdhm_to_dt(*line.split()[2:4])
             break
     else:
         timestamp = datetime(1970, 1, 1, 00, 00)
