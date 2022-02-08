@@ -1,3 +1,4 @@
+from itertools import takewhile
 from pdfminer.layout import LAParams
 from ...util import *
 
@@ -21,30 +22,16 @@ def parse(txt):
     i += 2
     # Start of items
     items = []
-    while not lines[i].startswith('Total:'):
-        if lines[i] == 'Delavstämning korrekt' or lines[i] == 'Avstämning korrekt.':
-            i += 2
-        elif lines[i] == 'Stammisrabatt ICA':
-            # Already accounted for in the totals.
-            i += 6
-        elif '.' in lines[i+4]:
-            # Normal entry
-            n, ean, p, q = lines[i:i+7:2]
-            items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
-            i += 10
-            if n.startswith('*') and lines[i+2].startswith('-') and lines[i] != 'Stammisrabatt ICA':
-                i += 4
-        elif '.' in lines[i+6] and lines[i+4][0].isdigit():
-            # No EAN; usually return fee, which is already accounted for
-            # However, return fees paid back must be added.
-            if lines[i].startswith('Pantretur'):
-                items.append(('Pant', Decimal(1), parse_decimal(lines[i+6]), None))
-            i += 8
-        elif '.' in lines[i+2]:
-            # Special, which is already accounted for
-            i += 4
-        else:
-            raise NotImplementedError
+    while True:
+        # Forward until EAN (fully numerical str).
+        while not (lines[i].isdigit() and len(lines[i]) >= 8) and not lines[i].startswith('Total:'):
+            i += 1
+        if lines[i].startswith('Total:'):
+            break
+        n, ean, p, q = lines[i-2:i+5:2]
+        i += 8
+        print(n,q,p,ean)
+        items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
     i += 2
     assert sum(round(q*p) for _, q, p, _ in items) == parse_decimal(lines[i])
     return timestamp, comment, items
@@ -55,4 +42,4 @@ def identify(txt):
 
 
 def laparams():
-    return LAParams(boxes_flow=None, line_margin=0)
+    return LAParams(boxes_flow=None, line_margin=0, char_margin=0.2)
