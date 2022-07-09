@@ -6,7 +6,7 @@
             <label for="user_id">Användare</label>
             <select id="user_id" name="user_id" required>
                 {% for id, name in users.items() %}
-                <option value="{{ id }}" {{ 'selected' if id == session['user_id'] }}>{{ name }}</option>
+                <option value="{{ id }}" {{ 'selected' if id == g.user_id }}>{{ name }}</option>
                 {% endfor %}
             </select>
             <br>

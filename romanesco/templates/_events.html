@@ -7,7 +7,7 @@
                 <span class="sm">{{ timestamp.strftime('%-d %b %H:%M') }}</span>
             </div>
             <div class="totals">
-                <span>{{ round(amount[session['user_id']]) }} <span>kr</span></span>
+                <span>{{ round(amount[g.user_id]) }} <span>kr</span></span>
                 <span class="sm">({{ round(amount[0]) }} <span>kr</span>)</span>
             </div>
         </a>
