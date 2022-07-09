@@ -1,20 +1,10 @@
 {% extends "_base.html" %}
-{% block title %}Statistik &mdash; Romanesco{% endblock %}
+{% from "_stats_table.html" import gtable %}
+{% block title %}Statistik: kategorier &mdash; Romanesco{% endblock %}
 {% block body %}
-    {% for ts, category_stats2 in statistics.items()|sort(attribute='0', reverse=true) %}
     <div>
-        <div>{{ ts[0] }}.{{ ts[1] }} <span class="amount">{{ round(category_stats2.values()|sum) }}</span>&nbsp;<span class="currency">kr</span></div>
-        <div id="cats">
-            {% for category, value in category_stats2.items()|sort(attribute='0') %}
-            <div>
-                <div>{{ category }}</div>
-                <div><span class="amount">{{ round(value) }}</span>&nbsp;<span class="currency">kr</span></div>
-            </div>
-            {% endfor %}
-        </div>
-
+        {{ gtable('Period', categories, statistics) }}
     </div>
-    {% endfor %}
     <div id="recompute"><a href="{{ url_for('stats_statement') }}">(utdrag)</a></div>
     <div id="recompute"><a href="{{ url_for('debug_stats_recompute') }}">(räkna om)</a></div>
 {% endblock body %}

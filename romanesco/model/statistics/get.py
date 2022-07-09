@@ -2,7 +2,9 @@ from datetime import datetime
 from decimal import Decimal
 from math import floor
 from typing import Optional
+from itertools import groupby
 
+from ...util import dense
 from .util_dateocc import date_occurrences
 
 from .. import db
@@ -21,7 +23,8 @@ def stats_overview(user_id: int):
     # Current month total
     row = c.execute(
         'select total from stats_total where user_id = ? and category_id is null and year = ? and month = ?',
-        (user_id, today.year, today.month)).fetchone()
+        (user_id, today.year, today.month)
+    ).fetchone()
     current_month = floor(Decimal(row[0])) if row is not None else 0
 
     # Current day in month avg
@@ -30,7 +33,8 @@ def stats_overview(user_id: int):
     # Category totals
     rows = c.execute(
         'select c.name, total from stats_total left join categories c on category_id = c.id where user_id = ? and category_id is not null and year = ? and month = ?',
-        (user_id, today.year, today.month))
+        (user_id, today.year, today.month)
+    )
     category_stats = {row[0]: floor(Decimal(row[1])) for row in rows}
 
     return current_month, avg_this_day, net, sorted(category_stats.items(), key=lambda x: -x[1])
@@ -42,27 +46,38 @@ def _avg_this_day(c: 'db.Cursor', user_id: int, category_id: Optional[int], now:
         return 0
     epoch = datetime.fromtimestamp(row[0])
 
-    tots = {row[0]: Decimal(row[1]) for row in c.execute('select day, total from stats_days where user_id = ? and category_id is ? and day <= ? order by day', (user_id, category_id, now.day))}
+    tots = {
+        row[0]: Decimal(row[1])
+        for row in c.execute(
+            'select day, total from stats_days where user_id = ? and category_id is ? and day <= ? order by day',
+            (user_id, category_id, now.day)
+        )
+    }
     denoms = date_occurrences(epoch.date(), now.date())
     return floor(sum(tots[k]/denoms[k] for k in tots.keys()))
 
 
-def stats_all_category_stats(user_id: int):
+def stats_category_table(user_id: int) -> (list[str], list[tuple[str, Decimal, list[Decimal]]]):
     c = db.cursor()
-    category_stats = {}
+    categories = [x[0] for x in c.execute('select name from categories order by id')]
     rows = c.execute(
-        'select year, month, c.name, total from stats_total left join categories c on category_id = c.id where user_id = ? and category_id is not null',
+        'select year, month, category_id, total from stats_total where user_id = ? order by year desc, month desc',
         (user_id,))
-    for year, month, name, rtotal in rows:
-        cat = category_stats.setdefault((year, month), dict())
-        cat[name] = Decimal(rtotal)
-    return category_stats
+    table = [
+        (f'{year}.{month}', Decimal(next(totals)[3]),
+            list(dense(map(lambda x: (x[2], Decimal(x[3])), totals), Decimal(0), start=1, stop=len(categories)+1)))
+        for (year, month), totals in groupby(rows, lambda x: x[:2])
+    ]
+    return categories, table
 
 
-def stats_all_totals():
+def stats_user_table() -> (list[str], list[tuple[str, list[Decimal]]]):
     c = db.cursor()
-    total_stats = {}
-    rows = c.execute('select year, month, total from stats_total where category_id is null')
-    for year, month, rtotal in rows:
-        total_stats[(year, month)] = total_stats.get((year, month), 0) + Decimal(rtotal)
-    return total_stats
+    users = [x[0] for x in c.execute('select name from users order by id')]
+    rows = c.execute('select year, month, user_id, total from stats_total where category_id is null order by year desc, month desc')
+    table = [
+        (f'{year}.{month}',
+            list(dense(map(lambda x: (x[2], Decimal(x[3])), totals), Decimal(0), start=1, stop=len(users) + 1)))
+        for (year, month), totals in groupby(rows, lambda x: x[:2])
+    ]
+    return users, table

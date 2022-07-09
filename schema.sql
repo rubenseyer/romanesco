@@ -54,7 +54,7 @@ create table if not exists stats_total (
     year        integer not null,
     month       integer not null,
     total       text not null,
-    primary key(user_id, category_id, year, month),
+    primary key(user_id, year desc, month desc, category_id),
     foreign key(user_id) references users(id),
     foreign key(category_id) references categories(id)
 );

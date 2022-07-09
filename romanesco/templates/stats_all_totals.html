@@ -1,9 +1,0 @@
-{% extends "_base.html" %}
-{% block title %}Statistik &mdash; Romanesco{% endblock %}
-{% block body %}
-    {% for ts, value in statistics.items()|sort(attribute='0', reverse=true) %}
-    <div>
-        <div>{{ ts[0] }}.{{ ts[1] }} <span class="amount">{{ round(value) }}</span>&nbsp;<span class="currency">kr</span></div>
-    </div>
-    {% endfor %}
-{% endblock body %}

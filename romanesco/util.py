@@ -1,5 +1,8 @@
 from decimal import Decimal, ROUND_HALF_EVEN, ROUND_HALF_UP
 from datetime import datetime
+from typing import Iterator, TypeVar, Optional
+
+T = TypeVar('T')
 
 
 def parse_decimal(s: str) -> Decimal:
@@ -32,3 +35,16 @@ def ymdhm_to_dt(ymd, hm) -> datetime:
 
 def splits_from_str(split_str: str) -> tuple[int, ...]:
     return tuple(int(s) for s in split_str.split(',')) if split_str else ()
+
+
+def dense(it: Iterator[tuple[int, T]], default: T, start: int = 0, stop: Optional[int] = None) -> Iterator[T]:
+    ix = start
+    for i, x in it:
+        while i < ix:
+            yield default
+            ix += 1
+        yield x
+        ix += 1
+    if stop is not None and ix < stop:
+        for _ in range(ix, stop):
+            yield default

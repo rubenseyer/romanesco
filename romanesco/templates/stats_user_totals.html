@@ -1,0 +1,8 @@
+{% extends "_base.html" %}
+{% from "_stats_table.html" import gtable %}
+{% block title %}Statistik: användare &mdash; Romanesco{% endblock %}
+{% block body %}
+    <div>
+        {{ gtable('Period', users, statistics) }}
+    </div>
+{% endblock body %}

@@ -1,0 +1,28 @@
+{% macro gtable(leftheader, headers, rows) %}
+    <table>
+        <thead>
+            <tr>
+                <th>{{ leftheader }}</th>
+                {% for th in headers %}
+                    <th>{{ th }}</th>
+                {% endfor %}
+                <th>Summa</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                {% for value in row[-1] %}
+                    <td {% if value < 0 %} class="red" {% endif %}>{{ round(value) }}</td>
+                {% endfor %}
+                {% if row|length == 3 %}
+                    <td>{{ round(row[1]) }}</td>
+                {% else %}
+                    <td>{{ round(row[-1]|sum) }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}

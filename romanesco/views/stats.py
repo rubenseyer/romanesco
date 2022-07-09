@@ -1,5 +1,5 @@
 from flask import session, abort, redirect, url_for, render_template
-from ..model.statistics import stats_full_recompute, stats_all_category_stats, stats_all_totals
+from ..model.statistics import stats_full_recompute, stats_category_table, stats_user_table
 from .. import app
 
 
@@ -15,10 +15,13 @@ def debug_stats_recompute():
 def stats():
     if 'user_id' not in session:
         return abort(401)
-    return render_template('stats_category_totals.html', statistics=stats_all_category_stats(session['user_id']))
+    cats, table = stats_category_table(session['user_id'])
+    return render_template('stats_category_totals.html', categories=cats, statistics=table)
+
 
 @app.route('/stats/statement')
 def stats_statement():
     if 'user_id' not in session:
         return abort(401)
-    return render_template('stats_all_totals.html', statistics=stats_all_totals())
+    users, table = stats_user_table()
+    return render_template('stats_user_totals.html', users=users, statistics=table)

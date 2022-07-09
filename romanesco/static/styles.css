@@ -163,3 +163,17 @@ body > div {
     font-size: 66%;
     color: #888;
 }
+
+table {
+    border-collapse: collapse;
+}
+tr:nth-child(even) {
+    background-color: var(--bg-accent2);
+}
+th, td {
+    padding: 0.5rem 0.8rem;
+    text-align: right;
+}
+th:first-child, td:first-child {
+    text-align: left;
+}
