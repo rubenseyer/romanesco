@@ -16,7 +16,7 @@ Romanesco is designed to be used behind some other authentication system
 You can trivially configure your web server to enable this through e.g. basic auth.
 
 Alternatively, you may run Romanesco locally in single-user mode.
-Just execute `python3 -m romanesco`.
+Just execute `python3 -m romanesco --single`.
 
 ## Contributing
 Romanesco is licensed under [the EUPL-1.2-or-later](https://joinup.ec.europa.eu/collection/eupl/eupl-guidelines-faq-infographics).
