@@ -15,7 +15,7 @@ def before_request():
         user_name = request.headers.get('X-Remote-User')
         if user_name is None:
             abort(401)
-        user_name = user_name.lower()
+        user_name = user_name.title()
         row = c.execute('select id from users where name = ?', (user_name,)).fetchone()
         if row is not None:
             user_id = row[0]
