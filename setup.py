@@ -9,7 +9,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where='.'),
     python_requires='>=3.9',
     entry_points={'console_scripts': ['romanesco=romanesco:__main__']},
-    package_data={'romanesco': ['static/*', 'templates/*']},
+    package_data={'romanesco': ['static/*', 'templates/*', 'schema.sql']},
     install_requires=['Flask', 'apsw', 'pdfminer.six'],
     extras_require={'bjoern':['bjoern']},
 )
