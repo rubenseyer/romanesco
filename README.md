@@ -10,13 +10,13 @@ The system comes with support for parsing digital receipts from two of the bigge
 grocery store chains in Sweden, ICA and Willys.
 
 ## Installation
-Using `setup.py` will do the right thing.
+Cloning and using `pip install .` will do the right thing.
 Romanesco is designed to be used behind some other authentication system
 (communicate a unique name in the `X-Remote-User` header).
 You can trivially configure your web server to enable this through e.g. basic auth.
 
 Alternatively, you may run Romanesco locally in single-user mode.
-Just execute `python3 -m romanesco --single`.
+Just execute `romanesco --single`.
 
 ## Contributing
 Romanesco is licensed under [the EUPL-1.2-or-later](https://joinup.ec.europa.eu/collection/eupl/eupl-guidelines-faq-infographics).
