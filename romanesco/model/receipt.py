@@ -10,22 +10,24 @@ from .. import db
 
 def parse_receipt(fp) -> 'Receipt':
     timestamp, comment, items = parse(fp)
-    return Receipt(None, timestamp, comment.strip(), list(map(Item.from_parsed, items)))
+    return Receipt(None, timestamp, comment.strip(), list(map(Item.from_parsed, items)), automatic=True)
 
 
 class Receipt:
-    __slots__ = ('id', 'timestamp', 'comment', 'items', '_totals')
+    __slots__ = ('id', 'timestamp', 'comment', 'items', 'automatic', '_totals')
     id: int
     timestamp: datetime
     comment: str
     items: list['Item']
+    automatic: bool
     _totals: list[Decimal]
 
-    def __init__(self, id, time, comment, items, split_count=None):
+    def __init__(self, id, time, comment, items, split_count=None, automatic=False):
         self.id = id
         self.timestamp = time
         self.comment = comment
         self.items = items
+        self.automatic = automatic
         self._totals = [Decimal('0') for _ in range(0, (split_count+1) if split_count is not None else (len(users())+1))]
         self.recalculate()
 
@@ -57,7 +59,7 @@ class Receipt:
     def split_total(self, i: int) -> Decimal:
         return self._totals[i]
 
-    def recalculate(self, cache=False):
+    def recalculate(self):
         split_count = len(self._totals) - 1
         self._totals = [Decimal('0') for _ in self._totals]
         for item in self.items:
@@ -66,42 +68,35 @@ class Receipt:
                 raise IndexError('Inconsistent splits across receipt')
             for i in range(1, len(self._totals)):
                 self._totals[i] += item.split_total(i, count=split_count)
-        if cache:
+
+    def save(self, update_items=True):
+        self.recalculate()
+        with db:
             c = db.cursor()
-            c.execute('update receipts set cached_totals = ? where id = ?', (','.join(str(d) for d in self._totals), self.id))
+            data = (self.timestamp.timestamp(), self.comment, ','.join(str(d) for d in self._totals), self.id)
+            if self.id is None:
+                c.execute('insert into receipts (timestamp, comment, cached_totals) values (?,?,?)', data[:-1])
+                self.id = db.last_insert_rowid()
+            else:
+                c.execute('update receipts set timestamp = ?, comment = ?, cached_totals = ? where id = ?', data)
+            if not update_items:
+                return
+            for ix, item in enumerate(self.items):
+                if item.id is None:
+                    item.find_or_create()
+                c.execute(
+                    'replace into receipts_items (item_id, receipt_id, quantity, price, sort) values (?, ?, ?, ?, ?)',
+                    (item.id, self.id, str(item.quantity), str(item.price), ix))
 
-    def add_new_item(self, name, quantity, price, ean, splits, category_id, sort):
-        if splits and len(splits) != len(self._totals) - 1:
+    def add_item(self, item: 'Item', sort: int):
+        if item.splits and len(item.splits) != len(self._totals) - 1:
             raise ValueError('Inconsistent splits across receipt')
-        splits = ','.join(str(s) for s in splits)
-        c = db.cursor()
-        candidate = c.execute('select id from items where name = ? and ean is ? and splits = ? and category_id = ?', (name, ean, splits, category_id)).fetchone()
-        if candidate is None:
-            c.execute('insert into items (name, ean, splits, category_id) values (?,?,?,?)', (name, ean, splits, category_id))
-            item_id = db.last_insert_rowid()
-        else:
-            item_id = candidate[0]
-        c.execute('insert into receipts_items (item_id, receipt_id, quantity, price, sort) values (?, ?, ?, ?, ?)',
-                  (item_id, self.id, str(quantity), str(price), sort))
-        self.items.append(Item.from_data(item_id, name, quantity, price, ean, splits, category_id))
-
-    def add_known_item(self, item_id, quantity, price, sort):
-        c = db.cursor()
-        c.execute(
-            'replace into receipts_items (item_id, receipt_id, quantity, price, sort) values (?, ?, ?, ?, ?)',
-            (item_id, self.id, str(quantity), str(price), sort))
-        self.items.append(Item.get(item_id, quantity, price))
+        self.items.insert(sort, item)
 
     def delete_item(self, id: int):
         c = db.cursor()
         c.execute('delete from receipts_items where receipt_id = ? and item_id = ?', (self.id, id))
         self.items = [item for item in self.items if item.id != id]
-
-    def update_tc(self, time: datetime, comment: str):
-        c = db.cursor()
-        c.execute('update receipts set timestamp = ?, comment = ? where id = ?', (time.timestamp(), comment, self.id))
-        self.timestamp = time
-        self.comment = comment
 
     def copy(self):
         cls = self.__class__
@@ -126,8 +121,10 @@ class Item:
     category: int
 
     @staticmethod
-    def from_data(item_id: int, name: str, quantity: str, price: str, ean: Optional[str], splits: str, category_id: int) -> 'Item':
-        return Item(item_id, name, Decimal(quantity), Decimal(price), ean, splits_from_str(splits), category_id)
+    def from_data(item_id: Optional[int], name: str, quantity: str, price: str, ean: Optional[str], splits: Union[str,tuple[int,...]], category_id: int) -> 'Item':
+        if isinstance(splits, str):
+            splits = splits_from_str(splits)
+        return Item(item_id, name, Decimal(quantity), Decimal(price), ean, splits, category_id)
 
     @staticmethod
     def get(item_id: int, quantity: str, price: str) -> 'Item':
@@ -153,6 +150,20 @@ class Item:
             if row is not None:
                 item_id, splits, category_id = row
         return Item.from_data(item_id, name, quantity, price, ean, splits, category_id)
+
+    def find_or_create(self) -> None:
+        if self.id is not None:
+            raise ValueError('item already registered')
+        splits = ','.join(str(s) for s in self.splits)
+        c = db.cursor()
+        candidate = c.execute('select id from items where name = ? and ean is ? and splits = ? and category_id = ?',
+                              (self.name, self.ean, splits, self.category)).fetchone()
+        if candidate is None:
+            c.execute('insert into items (name, ean, splits, category_id) values (?,?,?,?)',
+                      (self.name, self.ean, splits, self.category))
+            self.id = db.last_insert_rowid()
+        else:
+            self.id = candidate[0]
 
     def total(self) -> Decimal:
         return round(self.quantity * self.price)

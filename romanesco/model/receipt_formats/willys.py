@@ -3,7 +3,7 @@ from pdfminer.layout import LAParams
 from ...util import *
 
 
-def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
+def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, None]]]:
     lines = txt.splitlines()
     comment = lines[0].strip() + ' ' + lines[1].strip()
     i = 0
@@ -15,7 +15,7 @@ def parse(txt: str) -> (datetime, list[(str, Decimal, Decimal, None)]):
     name = None
     quantity = None
     price = None
-    items = []
+    items: list[tuple[str, Decimal, Decimal, None]] = []
     while i < len(lines):
         line = lines[i]
         i += 1

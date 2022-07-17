@@ -18,7 +18,7 @@ def stats_full_recompute():
             stats_new_deposit(user_id, Decimal(amount_str))
         for rid in c.execute('select id from receipts order by rowid'):
             r = Receipt.get(rid[0])
-            r.recalculate(cache=True)
+            r.save(update_items=False)
             stats_new_receipt(r)
 
 

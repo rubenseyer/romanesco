@@ -20,7 +20,7 @@ def round_even(d: Decimal, prec=Decimal('0.01')) -> Decimal:
 def tol_div(num: Decimal, den: Decimal) -> Decimal:
     q = num / den
     zeroes = 0
-    q_prime = 0
+    q_prime = Decimal('0')
     while round(q_prime * den) != num:
         zeroes += 1
         q_prime = round(q, prec=Decimal(f'0.{zeroes * "0"}1'))

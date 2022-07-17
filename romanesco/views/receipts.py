@@ -2,7 +2,7 @@ from io import BufferedReader
 from datetime import datetime
 from decimal import Decimal
 from flask import render_template, request, redirect, url_for, abort
-from ..model import users, categories, parse_receipt, Receipt, stats_new_receipt, stats_update_receipt
+from ..model import users, categories, parse_receipt, Receipt, Item, stats_new_receipt, stats_update_receipt
 from .. import app, db
 
 
@@ -20,7 +20,7 @@ def receipt_new():
     with db:
         r = Receipt.new(datetime.fromtimestamp(d['timestamp']), d['comment'])
         _process_items_json(r, d['items'])
-        r.recalculate(cache=True)
+        r.save()
         print(r)
         stats_new_receipt(r)
     return redirect(url_for('overview'))
@@ -38,15 +38,14 @@ def receipt_edit(id):
         abort(400)  # only old receipts
     r_old = r.copy()
     with db:
-        timestamp = datetime.fromtimestamp(d['timestamp'])
-        if r.timestamp != timestamp or r.comment != d['comment']:
-            r.update_tc(timestamp, d['comment'])
+        r.timestamp = datetime.fromtimestamp(d['timestamp'])
+        r.comment = d['comment']
         r.items = []
         _process_items_json(r, d['items'])
         for tbd in d['deletedItems']:
             r.delete_item(tbd)
         print(r)
-        r.recalculate(cache=True)
+        r.save()
         stats_update_receipt(r_old, r)
     return redirect(url_for('overview'))
 
@@ -69,6 +68,7 @@ def receipt_upload():
 def _process_items_json(r: Receipt, items_json: list):
     for ix, item in enumerate(items_json):
         if item['id'] is None:
-            r.add_new_item(item['name'], Decimal(item['quantity']), Decimal(item['price']), item['ean'], item['splits'], item['category'], ix)
+            item_obj = Item.from_data(None, item['name'], item['quantity'], item['price'], item['ean'], item['splits'], item['category'])
         else:
-            r.add_known_item(item['id'], Decimal(item['quantity']), Decimal(item['price']), ix)
+            item_obj = Item.get(item['id'], item['quantity'], item['price'])
+        r.add_item(item_obj, ix)
