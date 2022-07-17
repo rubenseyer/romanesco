@@ -9,6 +9,12 @@ of the current situation.
 The system comes with support for parsing digital receipts from two of the biggest
 grocery store chains in Sweden, ICA and Willys.
 
+Romanesco 'learns' the categorization of articles (by referencing the latest instance in the database),
+so it quickly almost automatically categorizes uploaded receipts.
+
+Additionally there is **beta** support for automatically retrieving these receipts from Willys,
+using the automation components _botccoli_.
+
 ## Installation
 Cloning and using `pip install .` will do the right thing.
 Romanesco is designed to be used behind some other authentication system
@@ -17,6 +23,7 @@ You can trivially configure your web server to enable this through e.g. basic au
 
 Alternatively, you may run Romanesco locally in single-user mode.
 Just execute `romanesco --single`.
+This is especially suitable for development.
 
 ## Contributing
 Romanesco is licensed under [the EUPL-1.2-or-later](https://joinup.ec.europa.eu/collection/eupl/eupl-guidelines-faq-infographics).

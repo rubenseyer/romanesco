@@ -1,6 +1,6 @@
-{% for id, timestamp, comment, amount in events %}
+{% for id, timestamp, comment, amount, auto in events %}
     {% if id is not none %} {# receipt #}
-        <a href="{{ url_for('receipt_edit', id=id) }}" class="log-entry receipt">
+        <a href="{{ url_for('receipt_edit', id=id) }}" class="log-entry receipt{{ ' automatic' if auto else '' }}">
             <div class="icon">&#x1f9fe;</div>
             <div class="info">
                 <span>{{ comment or '(kvitto)' }}</span>

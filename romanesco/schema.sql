@@ -2,7 +2,8 @@ create table if not exists receipts (
     id            integer primary key not null,
     timestamp     integer not null,
     comment       text not null,
-    cached_totals text
+    cached_totals text,
+    automatic     boolean not null default false
 );
 create index if not exists ix_receipts_timestamp on receipts(timestamp);
 
@@ -66,4 +67,15 @@ create table if not exists stats_days (
     primary key(user_id, category_id, day),
     foreign key(user_id) references users(id),
     foreign key(category_id) references categories(id)
+);
+
+create table if not exists botccoli_config (
+    user_id      integer not null,
+    adapter_key  text not null,
+    last_id      text,
+    last_date    integer,
+    user_enc     blob not null,
+    passwd_enc   blob not null,
+    cookies_json blob,
+    foreign key(user_id) references users(id)
 );

@@ -40,6 +40,7 @@ def receipt_edit(id):
     with db:
         r.timestamp = datetime.fromtimestamp(d['timestamp'])
         r.comment = d['comment']
+        r.automatic = False
         r.items = []
         _process_items_json(r, d['items'])
         for tbd in d['deletedItems']:

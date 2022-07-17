@@ -1,6 +1,6 @@
 [project]
 name = "romanesco"
-version = "1.0.0"
+version = "1.1.0"
 description = "Expenses reporting system"
 urls = {repository = "https://github.com/rubenseyer/romanesco"}
 requires-python = ">=3.9"
@@ -11,15 +11,23 @@ dependencies = [
   "apsw ~= 3.38.1",
   "pdfminer.six >= 20201018"
 ]
-optional-dependencies = {bjoern = ["bjoern"]}
+
+[project.optional-dependencies]
+bjoern = ["bjoern"]
+botccoli = [
+  "selenium ~= 4.2.0",
+  "requests ~= 2.27.1",
+  "cryptography ~= 37.0.2"
+]
 
 [project.scripts]
 romanesco = "romanesco:__main__"
+botccoli = "romanesco.botccoli:__main__"
 
 [tool.setuptools]
+packages = ["romanesco"]
 include-package-data = false
 package-data = {romanesco = ["static/*", "templates/*", "schema.sql"]}
-
 
 [build-system]
 requires = ["setuptools"]

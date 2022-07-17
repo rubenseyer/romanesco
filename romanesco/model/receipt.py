@@ -34,13 +34,13 @@ class Receipt:
     @staticmethod
     def get(id: int) -> 'Receipt':
         c = db.cursor()
-        row = c.execute('select timestamp, comment from receipts where id = ?', (id,)).fetchone()
+        row = c.execute('select timestamp, comment, automatic from receipts where id = ?', (id,)).fetchone()
         if row is None:
             raise LookupError(f'could not find receipt {id}')
-        timestamp, comment = row
+        timestamp, comment, automatic = row
         item_rows = list(c.execute('select item_id, name, quantity, price, ean, splits, category_id \
             from receipts_items left join items on item_id = items.id where receipt_id = ? order by sort', (id,)))
-        return Receipt(id, datetime.fromtimestamp(timestamp), comment, [Item.from_data(*row) for row in item_rows])
+        return Receipt(id, datetime.fromtimestamp(timestamp), comment, [Item.from_data(*row) for row in item_rows], automatic=automatic)
 
     @staticmethod
     def new(time: datetime, comment: str):
@@ -73,12 +73,12 @@ class Receipt:
         self.recalculate()
         with db:
             c = db.cursor()
-            data = (self.timestamp.timestamp(), self.comment, ','.join(str(d) for d in self._totals), self.id)
+            data = (self.timestamp.timestamp(), self.comment, ','.join(str(d) for d in self._totals), self.automatic, self.id)
             if self.id is None:
-                c.execute('insert into receipts (timestamp, comment, cached_totals) values (?,?,?)', data[:-1])
+                c.execute('insert into receipts (timestamp, comment, cached_totals, automatic) values (?,?,?,?)', data[:-1])
                 self.id = db.last_insert_rowid()
             else:
-                c.execute('update receipts set timestamp = ?, comment = ?, cached_totals = ? where id = ?', data)
+                c.execute('update receipts set timestamp = ?, comment = ?, cached_totals = ?, automatic = ? where id = ?', data)
             if not update_items:
                 return
             for ix, item in enumerate(self.items):
@@ -154,6 +154,8 @@ class Item:
     def find_or_create(self) -> None:
         if self.id is not None:
             raise ValueError('item already registered')
+        if self.category is None:  # unseen item in automatic
+            self.category = 1
         splits = ','.join(str(s) for s in self.splits)
         c = db.cursor()
         candidate = c.execute('select id from items where name = ? and ean is ? and splits = ? and category_id = ?',

@@ -15,7 +15,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 app.config.update(
     DATABASE_PATH=os.environ.get('DATABASE_PATH', './romanesco.db'),
-    SECRET_KEY=os.environ.get('SECRET_KEY', 'secret'),
+    SECRET_KEY=os.environ.get('SECRET_KEY', 'secretsecretsecretsecretsecretsecretsecretx='),
 )
 
 db = apsw.Connection(app.config['DATABASE_PATH'])
