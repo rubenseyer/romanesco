@@ -44,10 +44,11 @@ class WillysAdapter(BaseAdapter):
             WebDriverWait(driver, timeout=15).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, 'onetrust-pc-dark-filter'))
             )
+            time.sleep(2)  # Headless too fast
             submit.click()
 
             WebDriverWait(driver, timeout=30).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@data-src="/icons/LOGGED-IN-24px.svg"]'))
+                EC.presence_of_element_located((By.XPATH, '//span[text()="Logga ut"]'))
             )
 
     def iter_receipt_fps(self) -> Generator[BinaryIO, None, None]:
