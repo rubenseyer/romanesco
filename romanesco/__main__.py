@@ -28,7 +28,14 @@ def main():
         print(f'Romanesco @ {host}:{port}')
         app.logger.setLevel('INFO')
         default_handler.setFormatter(Formatter(fmt='%(message)s'))
-        bjoern.run(app, host, port, reuse_port=True)
+        try:
+            bjoern.run(app, host, port, reuse_port=True)
+        except KeyboardInterrupt:
+            print('Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0)
     else:
         app.run(
             host=host,
