@@ -40,7 +40,7 @@ def splits_from_str(split_str: str) -> tuple[int, ...]:
 def dense(it: Iterator[tuple[int, T]], default: T, start: int = 0, stop: Optional[int] = None) -> Iterator[T]:
     ix = start
     for i, x in it:
-        while i < ix:
+        while ix < i:
             yield default
             ix += 1
         yield x
