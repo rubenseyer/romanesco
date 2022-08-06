@@ -71,9 +71,10 @@ class Receipt:
 
     def save(self, update_items=True):
         self.recalculate()
+        ts = self.timestamp.timestamp()
         with db:
             c = db.cursor()
-            data = (self.timestamp.timestamp(), self.comment, ','.join(str(d) for d in self._totals), self.automatic, self.id)
+            data = (ts, self.comment, ','.join(str(d) for d in self._totals), self.automatic, self.id)
             if self.id is None:
                 c.execute('insert into receipts (timestamp, comment, cached_totals, automatic) values (?,?,?,?)', data[:-1])
                 self.id = db.last_insert_rowid()
@@ -84,6 +85,7 @@ class Receipt:
             for ix, item in enumerate(self.items):
                 if item.id is None:
                     item.find_or_create()
+                c.execute('update items set last_use = ? where id = ?', (ts, item.id))
                 c.execute(
                     'replace into receipts_items (item_id, receipt_id, quantity, price, sort) values (?, ?, ?, ?, ?)',
                     (item.id, self.id, str(item.quantity), str(item.price), ix))
@@ -141,12 +143,12 @@ class Item:
         category_id = None
         # First try to lookup based on EAN
         if ean is not None:
-            row = c.execute('select id, splits, category_id from items where ean = ? order by rowid desc limit 1', (ean,)).fetchone()
+            row = c.execute('select id, splits, category_id from items where ean = ? order by last_use desc, rowid desc limit 1', (ean,)).fetchone()
             if row is not None:
                 item_id, splits, category_id = row
         # If EAN lookup fails, try to lookup based on name
         if category_id is None:
-            row = c.execute('select id, splits, category_id from items where name = ? order by rowid desc limit 1', (name,)).fetchone()
+            row = c.execute('select id, splits, category_id from items where name = ? order by last_use desc, rowid desc limit 1', (name,)).fetchone()
             if row is not None:
                 item_id, splits, category_id = row
         return Item.from_data(item_id, name, quantity, price, ean, splits, category_id)

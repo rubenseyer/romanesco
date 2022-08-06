@@ -13,6 +13,7 @@ create table if not exists items (
     ean         text,
     splits      text,
     category_id integer not null,
+    last_use    integer,
     foreign key(category_id) references categories(id)
 );
 create index if not exists ix_items_ean on items(ean) where ean is not null;
