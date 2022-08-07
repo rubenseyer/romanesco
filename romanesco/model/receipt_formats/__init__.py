@@ -1,8 +1,4 @@
 from pdfminer.high_level import extract_text
-from . import ica
-from . import willys
-
-_formats = [ica, willys]
 
 
 def parse(fp):
@@ -12,3 +8,13 @@ def parse(fp):
             return fmt.parse(txt)
     else:
         raise NotImplementedError
+
+
+class ReceiptParseWarning(UserWarning):
+    pass
+
+
+from . import ica
+from . import willys
+
+_formats = [ica, willys]

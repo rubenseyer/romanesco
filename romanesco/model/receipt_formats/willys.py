@@ -1,5 +1,7 @@
 import re
+import warnings
 from pdfminer.layout import LAParams
+from . import ReceiptParseWarning
 from ...util import *
 
 
@@ -67,6 +69,7 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
                 quantity, price = _starexpr(seg[1])
                 if round(quantity*price) != total_price:
                     # rounding failed??? try to fix price, because we are working with decimal quantities
+                    warnings.warn(ReceiptParseWarning(f'Entry rounding did not match: got {round(quantity*price)}, expected {total_price}'))
                     price = tol_div(total_price, quantity)
     # Read total
     while 'SEK' not in lines[i]:
@@ -81,7 +84,11 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
     else:
         timestamp = datetime(1970, 1, 1, 00, 00)
     # Done
-    assert sum(round(q*p) for _, q, p, _ in items) == total
+
+    parsed_total = sum(round(q*p) for _, q, p, _ in items)
+    if parsed_total != total:
+        warnings.warn(ReceiptParseWarning(f'Parsed total does not match actual total: got {parsed_total}, expected {total}'))
+
     return timestamp, comment, items
 
 

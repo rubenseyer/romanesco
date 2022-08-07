@@ -1,5 +1,6 @@
-from itertools import takewhile
+import warnings
 from pdfminer.layout import LAParams
+from . import ReceiptParseWarning
 from ...util import *
 
 
@@ -30,10 +31,14 @@ def parse(txt):
             break
         n, ean, p, q = lines[i-2:i+5:2]
         i += 8
-        print(n,q,p,ean)
         items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
     i += 2
-    assert sum(round(q*p) for _, q, p, _ in items) == parse_decimal(lines[i])
+
+    parsed_total = sum(round(q*p) for _, q, p, _ in items)
+    total = parse_decimal(lines[i])
+    if parsed_total != total:
+        warnings.warn(ReceiptParseWarning(f'Parsed total does not match actual total: got {parsed_total}, expected {total}'))
+
     return timestamp, comment, items
 
 

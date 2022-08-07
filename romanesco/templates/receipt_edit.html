@@ -55,6 +55,14 @@
                 </div>
             </div>
 
+            {% if alerts %}
+            <div id="warnings">
+                {% for msg in alerts %}
+                    <div>{{ msg }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <div>
                 <input type="submit" value="{{ 'Uppdatera' if committed else 'Skapa' }}">
             </div>

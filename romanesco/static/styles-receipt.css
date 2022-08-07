@@ -34,3 +34,7 @@ input:invalid { color: var(--fg-red); }
 #receipt-form .items-header, #receipt-form .items-footer  { font-weight: 700; }
 #receipt-form .items-footer { font-size: 0.8rem; }
 #receipt-form .items-footer .total { grid-column: 4; }
+#warnings {
+    font-size: 80%;
+    color: var(--fg-red);
+}
