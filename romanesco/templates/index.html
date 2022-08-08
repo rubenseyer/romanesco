@@ -34,15 +34,32 @@
             <a href="{{ url_for('stats') }}" title="Statistik">&#x1f4b8;&#x1f4ca;</a>
         </div>
     </div>
-    <div id="log" data-page="0"></div>
+    <div id="log"></div>
+    <div class="page-load-status">
+        <p class="infinite-scroll-request">Hämtar...</p>
+        <p class="infinite-scroll-last">Du har nått början av händelseloggen &#x1f9fe;&#x1f966;</p>
+        <p class="infinite-scroll-error">Fel vid hämtning av händelser</p>
+    </div>
 
+    <script src="https://unpkg.com/infinite-scroll@4/dist/infinite-scroll.pkgd.min.js"></script>
     <script>
         'use strict'
-
         const log = document.getElementById('log')
+        const infScroll = new InfiniteScroll(log, {
+            path: function() { return `{{ url_for('events_fetch', page=0)[:-1] }}${this.loadCount}` },
+            append: '.log-entry',
+            prefill: true,
+            fetchOptions: {
+                credentials: 'same-origin',
+                mode: 'same-origin',
+            },
+            history: false,
+            status: '.page-load-status'
+        })
+        /*
         const loadevents = () => {
             const page = parseInt(log.dataset.page)
-            fetch(`{{ url_for('events_fetch', page=0)[:-1] }}${page}`, {
+            fetch(`${page}`, {
                 credentials: 'same-origin',
                 mode: 'same-origin',
             })
@@ -58,5 +75,6 @@
                 return
             loadevents()
         }, {passive: true})
+        */
     </script>
 {% endblock body %}
