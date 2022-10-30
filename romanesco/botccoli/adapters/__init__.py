@@ -80,7 +80,7 @@ def with_driver(ba: BaseAdapter) -> Generator[WebDriver, None, None]:
 def with_session(ba: BaseAdapter) -> Generator[requests.Session, None, None]:
     s = requests.Session()
     s.headers.update({
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0',
     })
     s.cookies.update(ba.cookies)
 
