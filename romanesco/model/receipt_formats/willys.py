@@ -41,18 +41,22 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
         seg = re.split('  +', line)  # Segments by spacing
         # Unindented
         if seg[0]:
-            name = seg[0]
-            if len(seg) == 2:
+            # For some reason double-spaced items have appeared
+            if len(seg) >= 3 and '*' in seg[-2]:
+                name = ' '.join(seg[0:-2])
+                quantity, price = _starexpr(seg[-2])
+                assert round(quantity * price) == parse_decimal(seg[-1])
+            elif len(seg) >= 2:
+                name = ' '.join(seg[0:-1])
                 quantity = Decimal(1)
-                price = parse_decimal(seg[1])
-            elif len(seg) == 3 and '*' in seg[1]:
-                quantity, price = _starexpr(seg[1])
-                assert round(quantity*price) == parse_decimal(seg[2])
+                price = parse_decimal(seg[-1])
+            else:
+                warnings.warn(ReceiptParseWarning(f'Nonconforming item line "{line}"'))
         # Indented
         else:
             # Promo
-            if (':' in seg[1] or seg[1].startswith('Prisneds') or seg[1].startswith('Nytt pris')) and len(seg) == 3:
-                price += parse_decimal(seg[2]) / quantity
+            if (':' in seg[1] or seg[1].startswith('Prisneds') or seg[1].startswith('Nytt pris')) and len(seg) >= 3:
+                price += parse_decimal(seg[-1]) / quantity
             # Addon
             elif '+' in seg[1]:
                     if len(seg) == 4:
@@ -107,10 +111,14 @@ def _starexpr(ss: str) -> (Decimal, Decimal):
 # Recently (late 2022) Willys started to send broken mappings for their receipts, which makes the files unparseable.
 # This table maps back the characters so the files are machine-readable once again.
 CID2UNICHR = {
-    3: ' ', 8: '%', 9: '&', 13: '*', 15: ',', 16: '-', 17: '.', 18: '/', 19: '0', 20: '1', 21: '2', 22: '3', 23: '4', 24: '5',
-    25: '6', 26: '7', 27: '8', 28: '9', 29: ':', 32: '=', 36: 'A', 37: 'B', 38: 'C', 39: 'D', 40: 'E', 41: 'F', 42: 'G',
-    43: 'H', 44: 'I', 45: 'J', 46: 'K', 47: 'L', 48: 'M', 49: 'N', 50: 'O', 51: 'P', 53: 'R', 54: 'S', 55: 'T', 56: 'U',
-    57: 'V', 58: 'W', 59: 'X', 60: 'Y', 61: 'Z', 67: '`', 68: 'a', 69: 'b', 70: 'c', 71: 'd', 72: 'e', 73: 'f', 74: 'g',
-    75: 'h', 76: 'i', 77: 'j', 78: 'k', 79: 'l', 80: 'm', 81: 'n', 82: 'o', 83: 'p', 85: 'r', 86: 's', 87: 't', 88: 'u',
-    89: 'v', 92: 'y', 134: 'Ä', 152: 'Ö', 166: 'ä', 167: 'å', 184: 'ö', 135: 'Å', 14: '+', 52: 'Q', 84: 'q', 90: 'w',
-    91: 'x', 93: 'z', 139: 'É', 4: '!', 33: '>', 3057: '\ufffd', 34: '\ufffd'}
+    3: ' ', 4: '!', 8: '%', 9: '&', 13: '*', 14: '+', 15: ',', 16: '-', 17: '.', 18: '/',
+    19: '0', 20: '1', 21: '2', 22: '3', 23: '4', 24: '5', 25: '6', 26: '7', 27: '8', 28: '9',
+    29: ':', 31: '<', 32: '=', 33: '>',
+    36: 'A', 37: 'B', 38: 'C', 39: 'D', 40: 'E', 41: 'F', 42: 'G', 43: 'H', 44: 'I', 45: 'J', 46: 'K', 47: 'L', 48: 'M',
+    49: 'N', 50: 'O', 51: 'P', 52: 'Q', 53: 'R', 54: 'S', 55: 'T', 56: 'U', 57: 'V', 58: 'W', 59: 'X', 60: 'Y', 61: 'Z',
+    67: '`',
+    68: 'a', 69: 'b', 70: 'c', 71: 'd', 72: 'e', 73: 'f', 74: 'g', 75: 'h', 76: 'i', 77: 'j', 78: 'k', 79: 'l', 80: 'm',
+    81: 'n', 82: 'o', 83: 'p', 84: 'q', 85: 'r', 86: 's', 87: 't', 88: 'u', 89: 'v', 90: 'w', 91: 'x', 92: 'y', 93: 'z',
+    134: 'Ä', 135: 'Å', 139: 'É', 152: 'Ö', 166: 'ä', 167: 'å', 184: 'ö',
+    3057: '\ufffd', 34: '\ufffd'
+}
