@@ -80,4 +80,7 @@ def stats_user_table() -> (list[str], list[tuple[str, list[Decimal]]]):
             list(dense(map(lambda x: (x[2], Decimal(x[3])), totals), Decimal(0), start=1, stop=len(users) + 1)))
         for (year, month), totals in groupby(rows, lambda x: x[:2])
     ]
+    nets = list(map(lambda x: Decimal(x[0]), c.execute('select net from users order by id')))
+    #nets.append(sum(nets))
+    table.insert(0, ('-', nets))
     return users, table
