@@ -6,6 +6,7 @@ from ...util import *
 
 def parse(txt):
     lines = txt.splitlines()
+
     comment = lines[2]
     i = 0
     while not lines[i].startswith('Datum'):
@@ -30,13 +31,14 @@ def parse(txt):
         if lines[i].startswith('Total:'):
             break
         n, ean, p, q = lines[i-2:i+5:2]
-        i += 8
+        i += 5  # Shortcut no longer safe
         items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
     i += 2
 
     parsed_total = sum(round(q*p) for _, q, p, _ in items)
     total = parse_decimal(lines[i])
     if parsed_total != total:
+        # Sadly we lost the ability to parse out discounts
         warnings.warn(ReceiptParseWarning(f'Parsed total does not match actual total: got {parsed_total}, expected {total}'))
 
     return timestamp, comment, items
