@@ -28,6 +28,15 @@ input:invalid { color: var(--fg-red); }
 #receipt-form #items .splits > * {
     width: 4rem;
 }
+#receipt-form .actions {
+    display: flex;
+    justify-content: space-between;
+}
+#receipt-form .actions > div {
+    display: flex;
+    column-gap: 1rem;
+    justify-content: space-between;
+}
 #dom-templates { display: none; }
 #receipt-form a { text-decoration: none; }
 #receipt-form a:hover { text-decoration: underline; }

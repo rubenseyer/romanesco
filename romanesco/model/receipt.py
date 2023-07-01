@@ -48,6 +48,11 @@ class Receipt:
         c.execute('insert into receipts (timestamp, comment) values (?, ?)', (time.timestamp(), comment))
         return Receipt(db.last_insert_rowid(), time, comment, [])
 
+    @staticmethod
+    def delete(id: int):
+        c = db.cursor()
+        c.execute('delete from receipts where id = ?', (id,))
+
     def __str__(self):
         return '\n'.join([self.comment, str(self.timestamp), '=' * 45]
                          + [f'{item.name:<22}{str(item.quantity) + "*" + str(item.price):>15}{item.total():>8}' for item in self.items]

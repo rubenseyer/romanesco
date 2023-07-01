@@ -5,7 +5,6 @@
 {% endblock %}
 {% block body %}
     <div>
-        <!-- TODO -->
         {% set action = url_for('receipt_edit', id=receipt.id) if committed else url_for('receipt_new') %}
         <form id="receipt-form" action="{{ action }}" method=post enctype=multipart/form-data data-id="{{ receipt.id if committed }}">
             <input type="text" id="comment" name="comment" value="{{ receipt.comment if receipt is not none }}">
@@ -63,8 +62,21 @@
             </div>
             {% endif %}
 
-            <div>
+            <div class="actions">
                 <input type="submit" value="{{ 'Uppdatera' if committed else 'Skapa' }}">
+                {% if committed %}
+                    <div>
+                        <a id="template-save" href="#">Spara mall</a>
+                        <a id="delete" href="#">Radera</a>
+                    </div>
+                {% elif receipt is none or not receipt.items %}
+                    <select id="template-select">
+                        <option value="" disabled selected>Mallar</option>
+                        {% for id, comment in templates.items() %}
+                            <option value="{{ url_for('receipt_template', id=id) }}">{{ comment }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
             </div>
         </form>
     </div>
@@ -182,5 +194,39 @@
                 parent.remove()
             }
         })
+
+        let el = document.getElementById('template-save')
+        if (el != null) {
+            el.addEventListener('click', e => {
+                e.preventDefault()
+                fetch('{{ url_for('templates') }}', {
+                    credentials: 'same-origin',
+                    mode: 'same-origin',
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: parseInt(form.dataset.id) || null
+                }).then(response => window.location = response.url)
+            })
+        }
+
+        el = document.getElementById('delete')
+        if (el != null) {
+            el.addEventListener('click', e => {
+                e.preventDefault()
+                fetch(form.action, {
+                    credentials: 'same-origin',
+                    mode: 'same-origin',
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'}
+                }).then(response => window.location = response.url)
+            })
+        }
+
+        el = document.getElementById('template-select')
+        if (el != null) {
+            el.addEventListener('change', e => {
+                window.location = e.target.value
+            })
+        }
     </script>
 {% endblock %}

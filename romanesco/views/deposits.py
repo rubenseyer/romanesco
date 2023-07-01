@@ -1,8 +1,8 @@
 from decimal import Decimal
 from datetime import datetime
 from flask import render_template, request, redirect, url_for
-from ..model import users, stats_new_deposit
-from .. import app, db
+from ..model import users, new_deposit, stats_new_deposit
+from .. import app
 
 
 @app.route('/deposit', methods=['GET', 'POST'])
@@ -27,10 +27,7 @@ def deposit_new():
     except ValueError:
         return render_template('deposit_new.html', error='Fel: felaktig summa')
 
-    # yeah model in view but don't need a module for 3 lines
-    c = db.cursor()
-    c.execute('insert into deposits (user_id, timestamp, amount, comment) values (?,?,?,?)',
-              (user_id, timestamp.timestamp(), str(amount), request.form.get('comment', '')))
+    new_deposit(user_id, timestamp, amount, request.form.get('comment', ''))
     stats_new_deposit(user_id, amount)
 
-    return redirect(url_for('overview'))
+    return redirect(url_for('overview'), code=303)

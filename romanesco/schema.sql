@@ -80,3 +80,8 @@ create table if not exists botccoli_config (
     cookies_json blob,
     foreign key(user_id) references users(id)
 );
+
+create table if not exists templates_receipts (
+    receipt_id integer primary key not null,
+    foreign key(receipt_id) references receipts(id)
+);
