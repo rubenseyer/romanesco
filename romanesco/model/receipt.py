@@ -1,7 +1,7 @@
 from decimal import Decimal
 from datetime import datetime
 from dataclasses import dataclass
-from typing import Union, Optional
+from typing import Union, Optional, Self
 from .lookups import users
 from .receipt_formats import parse
 from ..util import round, splits_from_str
@@ -32,7 +32,7 @@ class Receipt:
         self.recalculate()
 
     @staticmethod
-    def get(id: int) -> 'Receipt':
+    def get(id: int) -> Self:
         c = db.cursor()
         row = c.execute('select timestamp, comment, automatic from receipts where id = ?', (id,)).fetchone()
         if row is None:
@@ -43,7 +43,7 @@ class Receipt:
         return Receipt(id, datetime.fromtimestamp(timestamp), comment, [Item.from_data(*row) for row in item_rows], automatic=automatic)
 
     @staticmethod
-    def new(time: datetime, comment: str):
+    def new(time: datetime, comment: str) -> Self:
         c = db.cursor()
         c.execute('insert into receipts (timestamp, comment) values (?, ?)', (time.timestamp(), comment))
         return Receipt(db.last_insert_rowid(), time, comment, [])
@@ -128,19 +128,19 @@ class Item:
     category: int
 
     @staticmethod
-    def from_data(item_id: Optional[int], name: str, quantity: str, price: str, ean: Optional[str], splits: Union[str,tuple[int,...]], category_id: int) -> 'Item':
+    def from_data(item_id: Optional[int], name: str, quantity: str, price: str, ean: Optional[str], splits: Union[str,tuple[int,...]], category_id: int) -> Self:
         if isinstance(splits, str):
             splits = splits_from_str(splits)
         return Item(item_id, name, Decimal(quantity), Decimal(price), ean, splits, category_id)
 
     @staticmethod
-    def get(item_id: int, quantity: str, price: str) -> 'Item':
+    def get(item_id: int, quantity: str, price: str) -> Self:
         c = db.cursor()
         name, ean, splits, category_id = c.execute('select name, ean, splits, category_id from items where id = ? ', (item_id,)).fetchone()
         return Item.from_data(item_id, name, quantity, price, ean, splits, category_id)
 
     @staticmethod
-    def from_parsed(raw) -> 'Item':
+    def from_parsed(raw) -> Self:
         c = db.cursor()
         name, quantity, price, ean = raw
         item_id = None
