@@ -1,11 +1,17 @@
+import decimal
 import warnings
 from pdfminer.layout import LAParams
 from . import ReceiptParseWarning
 from ...util import *
 
 
+import pprint
+
+
 def parse(txt):
     lines = txt.splitlines()
+
+    pprint.pprint(lines)
 
     comment = lines[2]
     i = 0
@@ -25,20 +31,47 @@ def parse(txt):
     # Start of items
     items = []
     while True:
-        # Forward until EAN (fully numerical str).
-        while not (lines[i].isdigit() and len(lines[i]) >= 8) and not lines[i].startswith('Total:'):
-            i += 1
+        # Forward until EAN
         if lines[i].startswith('Total:'):
             break
-        n, ean, p, q = lines[i-2:i+5:2]
-        i += 5  # Shortcut no longer safe
-        items.append((n.lstrip('* '), parse_decimal(q), parse_decimal(p), ean))
+        elif lines[i].startswith('- '):
+            # Probably a discount on the previous line
+            dis = parse_decimal(lines[i][2:])
+            n, q, p, ean = items[-1]
+            items[-1] = (n, q, p - dis/q, ean)
+            i += 2
+        #elif 'Pant' in lines[i]:
+        #    # Add bottle deposit
+        #    pantp, pantq = parse_decimal(lines[i+2]), parse_decimal(lines[i+4])
+        #    n, q, p, ean = items[-1]
+        #    if q == pantq:
+        #        items[-1] = (n, q, p + pantp, ean)
+        #    else:
+        #        warnings.warn(ReceiptParseWarning(f'Failed to parse pant {pantq} * {pantp}'))
+        #    i += 5
+        elif lines[i].isdigit() and len(lines[i]) >= 8:
+            # EAN detected (fully numerical str of sufficient length), register a line
+            n, ean, p, q = lines[i-2:i+5:2]
+            n, ean, p, q = n.lstrip('* '), ean, parse_decimal(p), parse_decimal(q)
+            # Try to find a total
+            try:
+                tot = parse_decimal(lines[i+6])
+            except decimal.InvalidOperation:
+                try:
+                    tot = parse_decimal(lines[i-4])
+                except decimal.InvalidOperation:
+                    tot = None
+            if tot is not None and tot != round(q * p):
+                warnings.warn(ReceiptParseWarning(f'Item {n} parsed total mismatch: got {round(q * p)}, expected {tot}. Should the quantity be {round(tot/p, Decimal("0.001"))} or is there pant?'))
+            i += 5  # Shortcut no longer safe
+            items.append((n, q, p, ean))
+        else:
+            i += 1
     i += 2
 
     parsed_total = sum(round(q*p) for _, q, p, _ in items)
     total = parse_decimal(lines[i])
     if parsed_total != total:
-        # Sadly we lost the ability to parse out discounts
         warnings.warn(ReceiptParseWarning(f'Parsed total does not match actual total: got {parsed_total}, expected {total}'))
 
     return timestamp, comment, items

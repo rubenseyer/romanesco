@@ -18,6 +18,7 @@ input:invalid { color: var(--fg-red); }
 #receipt-form #items > div {
     display: contents;
 }
+#receipt-form #items input[name=iname] { width: 100%; }
 #receipt-form #items .dirty input { font-style: italic; }
 #receipt-form #items .struck input { text-decoration: line-through; }
 #items .struck input:not([name=iname]), #items .struck select, #items .struck span, #items .struck div { visibility: hidden; }
