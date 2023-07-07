@@ -24,14 +24,20 @@
             </div>
             {% endfor %}
         </div>
-        <div id="graph">
-            <!-- TODO -->
-        </div>
         <div id="actions">
-            <a href="{{ url_for('receipt_new') }}" title="Nytt kvitto">&#x1f9fe;&#x1f195;</a>
-            <a href="{{ url_for('receipt_upload') }}" title="Ladda upp kvitto">&#x1f9fe;&#x1f4e4;</a>
-            <a href="{{ url_for('deposit_new') }}" title="Ny insättning">&#x1f4b3;&#x1f195;</a>
-            <a href="{{ url_for('stats') }}" title="Statistik">&#x1f4b8;&#x1f4ca;</a>
+            <a class="action" href="{{ url_for('receipt_new') }}" title="Nytt kvitto">&#x1f9fe;&#x1f195;</a>
+            <a class="action" href="{{ url_for('receipt_upload') }}" title="Ladda upp kvitto">&#x1f9fe;&#x1f4e4;</a>
+            <a class="action" href="{{ url_for('deposit_new') }}" title="Ny insättning">&#x1f4b3;&#x1f195;</a>
+            <div class="dropdown" role="button">
+                <span class="action" title="Fler alternativ" tabindex="0">&#9660;</span>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('stats') }}">&#x1f4b8;&#x1f4ca;&nbsp;Statistik</a>
+                    <a href="{{ url_for('stats_statement') }}">&#x1f4b8;&#x1f7f0;&nbsp;Kontoutdrag</a>
+                    <a href="{{ url_for('debug_stats_recompute') }}">Beräkna om allt (debug)</a>
+                    <a href="https://github.com/rubenseyer/romanesco">Om Romanesco</a>
+                </div>
+            </div>
+
         </div>
     </div>
     <div id="log"></div>
