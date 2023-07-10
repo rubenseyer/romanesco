@@ -5,28 +5,29 @@ import warnings
 
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
-import apsw
 
 from .logger import LoggerMiddleware
 from .util import round_even
+from .xdb import connect_db
 
 app = Flask(__name__)
 app.wsgi_app = LoggerMiddleware(app.wsgi_app, app.logger)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
-if 'DATABASE_PATH' not in os.environ:
-    warnings.warn('No database path configured... defaulting to local directory.')
+if 'DATABASE' not in os.environ:
+    warnings.warn('No database configured... defaulting to local directory.')
 if 'SECRET_KEY' not in os.environ:
     warnings.warn('No secret key configured... defaulting to dummy key.')
 
 app.config.update(
-    DATABASE_PATH=os.environ.get('DATABASE_PATH', './romanesco.db'),
+    DATABASE=os.environ.get('DATABASE', 'sqlite://./romanesco.db'),
     SECRET_KEY=os.environ.get('SECRET_KEY', 'secretsecretsecretsecretsecretsecretsecretx='),
 )
 
-db = apsw.Connection(app.config['DATABASE_PATH'])
-with db:
-    db.cursor().execute(files('romanesco').joinpath('schema.sql').read_text())
+db = connect_db(app.config['DATABASE'])
+with db.transaction():
+    c = db.cursor()
+    c.execute(files('romanesco').joinpath(f'xdb/schema_{db.type}.sql').read_text())
 
 app.jinja_env.globals['now'] = datetime.datetime.now
 app.jinja_env.globals['round'] = round_even

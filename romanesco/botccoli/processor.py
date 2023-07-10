@@ -23,7 +23,7 @@ def process_all():
             warnings.warn(w)
             continue
         r: Receipt
-        with db:
+        with db.transaction():
             for r in it:
                 r.save()
                 print(r)

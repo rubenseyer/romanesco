@@ -104,7 +104,7 @@ def get_adapters() -> dict[int, BaseAdapter]:
 
     c = db.cursor()
     adapters = {}
-    for row in c.execute('select adapter_key, last_id, last_date, user_enc, passwd_enc, cookies_json, rowid from botccoli_config'):
+    for row in c.execute('select adapter_key, last_id, last_date, user_enc, passwd_enc, cookies_json, config_id from botccoli_config'):
         last_id = row[1]
         last_date = date.fromtimestamp(row[2]) if row[2] is not None else date.today()
         user = fernet.decrypt(row[3].encode('utf-8')).decode('utf-8')
@@ -141,12 +141,12 @@ def register_adapter(
         values (?,?,?,?,?,?,?)', (user_id, adapter_key, last_id, last_date, user, passwd, cookies))
 
 
-def save_adapter(rowid: int, ada: BaseAdapter) -> None:
+def save_adapter(config_id: int, ada: BaseAdapter) -> None:
     last_date = datetime(year=ada.last_date.year, month=ada.last_date.month, day=ada.last_date.day).timestamp()
     cookies = json.dumps(ada.cookies)
     c = db.cursor()
     c.execute('update botccoli_config set last_id = ?, last_date = ?, cookies_json = ? \
-            where rowid = ?', (ada.last_id, last_date, cookies, rowid))
+            where config_id = ?', (ada.last_id, last_date, cookies, config_id))
 
 
 from . import willys

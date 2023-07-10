@@ -1,5 +1,6 @@
 from io import BufferedReader
 from datetime import datetime
+from decimal import Decimal
 import warnings
 from flask import render_template, request, redirect, url_for, abort
 from ..model import users, categories, templates, parse_receipt, Receipt, Item, stats_new_receipt, stats_update_receipt
@@ -15,12 +16,11 @@ def receipt_new():
                                alerts=[])
     # FUTURE: fix csrf
     d = request.json
-    print(d)
     if d['id'] is not None:
         abort(400)  # only new receipts
     if 'deletedItems' in d and d['deletedItems']:
         abort(400)  # can't delete in a new receipt
-    with db:
+    with db.transaction():
         r = Receipt.new(datetime.fromtimestamp(d['timestamp']), d['comment'])
         _process_items_json(r, d['items'])
         r.save()
@@ -45,7 +45,7 @@ def receipt_edit(id):
             if d['id'] is None or d['id'] != id:
                 abort(400)  # only old receipts
             r_old = r.copy()
-            with db:
+            with db.transaction():
                 r.timestamp = datetime.fromtimestamp(d['timestamp'])
                 r.comment = d['comment']
                 r.automatic = False
@@ -97,7 +97,7 @@ def receipt_template(id):
 def _process_items_json(r: Receipt, items_json: list):
     for ix, item in enumerate(items_json):
         if item['id'] is None:
-            item_obj = Item.from_data(None, item['name'], item['quantity'], item['price'], item['ean'], item['splits'], item['category'])
+            item_obj = Item.from_data(None, item['name'], Decimal(item['quantity']), Decimal(item['price']), item['ean'], item['splits'], item['category'])
         else:
-            item_obj = Item.get(item['id'], item['quantity'], item['price'])
+            item_obj = Item.get(item['id'], Decimal(item['quantity']), Decimal(item['price']))
         r.add_item(item_obj, ix)

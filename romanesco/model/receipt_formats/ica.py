@@ -5,13 +5,8 @@ from . import ReceiptParseWarning
 from ...util import *
 
 
-import pprint
-
-
 def parse(txt):
     lines = txt.splitlines()
-
-    pprint.pprint(lines)
 
     comment = lines[2]
     i = 0

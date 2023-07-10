@@ -1,36 +1,47 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
+from time import perf_counter_ns
 
 from .. import db
 from ..receipt import Receipt
 
 
 def stats_full_recompute():
-    with db:
+    print('Starting full stats recompute')
+    with db.transaction():
         c = db.cursor()
 
-        # Reset all statistics
-        c.execute('delete from stats_total; delete from stats_days; update users set net = \'0\';')
+        # Reset all statistics (apsw could have combined the queries)
+        tic = perf_counter_ns()
+        c.execute('delete from stats_total')
+        c.execute('delete from stats_days')
+        c.execute('update users set net = ?', (Decimal('0'),))
+        print(f'Cleared data in {(perf_counter_ns() - tic)*1e-6} ms')
 
         # Recompute all
-        for user_id, amount_str in c.execute('select user_id, amount from deposits order by rowid'):
-            stats_new_deposit(user_id, Decimal(amount_str))
-        for rid in c.execute('select id from receipts order by rowid'):
+        tic = perf_counter_ns()
+        for user_id, amount in c.execute('select user_id, amount from deposits order by timestamp'):
+            stats_new_deposit(user_id, amount)
+        tic = perf_counter_ns()
+        print(f'Deposits added in {(perf_counter_ns() - tic) * 1e-6} ms')
+        for rid in c.execute('select id from receipts order by id'):
             r = Receipt.get(rid[0])
             r.save(update_items=False)
             stats_new_receipt(r)
+        print(f'Receipts added in {(perf_counter_ns() - tic) * 1e-9} s')
+    print('Completed full stats recompute')
 
 
 def stats_new_deposit(user_id: int, amount: Decimal):
-    with db:
+    with db.transaction():
         c = db.cursor()
         _inc_net(c, user_id, amount)
 
 
 def stats_new_receipt(r: Receipt):
     totals = __extract_totals(r)
-    with db:
+    with db.transaction():
         c = db.cursor()
         for i in range(1, len(totals[None])):
             # note negative: decrement net for receipt
@@ -42,7 +53,7 @@ def stats_new_receipt(r: Receipt):
 
 def stats_delete_receipt(r: Receipt):
     totals = __extract_totals(r)
-    with db:
+    with db.transaction():
         c = db.cursor()
         for i in range(1, len(totals[None])):
             # note positive: return net for removed receipt
@@ -72,28 +83,27 @@ def _inc_net(c: 'db.Cursor', user_id: int, amount: Decimal):
     row = c.execute('select net from users where id = ?', (user_id,)).fetchone()
     if row is None:
         raise LookupError(f'could not find user {user_id}')
-    net = Decimal(row[0])
-    net += amount
-    c.execute('update users set net = ? where id = ?', (str(net), user_id))
+    net = row[0] + amount
+    c.execute('update users set net = ? where id = ?', (net, user_id))
 
 
 def _inc_total(c: 'db.Cursor', user_id: int, category_id: Optional[int], ts: datetime, amount: Decimal):
-    row = c.execute('select total from stats_total where user_id = ? and category_id is ? and year = ? and month = ?',
+    row = c.execute('select total from stats_total where user_id = ? and (category_id is not distinct from ?) and year = ? and month = ?',
                     (user_id, category_id, ts.year, ts.month)).fetchone()
     if row is None:
         c.execute('insert into stats_total (total, user_id, category_id, year, month) values (?,?,?,?,?)',
-                  (str(amount), user_id, category_id, ts.year, ts.month))
+                  (amount, user_id, category_id, ts.year, ts.month))
     else:
-        c.execute('update stats_total set total = ? where user_id = ? and category_id is ? and year = ? and month = ?',
-                  (str(Decimal(row[0]) + amount), user_id, category_id, ts.year, ts.month))
+        c.execute('update stats_total set total = ? where user_id = ? and (category_id is not distinct from ?) and year = ? and month = ?',
+                  ((row[0] + amount), user_id, category_id, ts.year, ts.month))
 
 
 def _inc_avg(c: 'db.Cursor', user_id: int, category_id: Optional[int], ts: datetime, amount: Decimal):
-    row = c.execute('select total from stats_days where user_id = ? and category_id is ? and day = ?',
+    row = c.execute('select total from stats_days where user_id = ? and (category_id is not distinct from ?) and day = ?',
                     (user_id, category_id, ts.day)).fetchone()
     if row is None:
         c.execute('insert into stats_days (total, user_id, category_id, day) values (?,?,?,?)',
-                  (str(amount), user_id, category_id, ts.day))
+                  (amount, user_id, category_id, ts.day))
     else:
-        c.execute('update stats_days set total = ? where user_id = ? and category_id is ? and day = ?',
-                  (str(Decimal(row[0]) + amount), user_id, category_id, ts.day))
+        c.execute('update stats_days set total = ? where user_id = ? and (category_id is not distinct from ?) and day = ?',
+                  ((row[0] + amount), user_id, category_id, ts.day))

@@ -16,7 +16,7 @@ In addition, there is **beta** support for automatically retrieving these receip
 using the automation component _botccoli_.
 
 ## Installation
-Cloning and using `pip install .` will do the right thing.
+Cloning and running `pip install .[sqlite]` will give you a starting installation.
 Romanesco is designed to be used behind some other authentication system
 (communicate a unique name in the `X-Remote-User` header).
 You can trivially configure your web server to enable this through e.g. basic auth.
