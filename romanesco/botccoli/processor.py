@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import warnings
 
 from .adapters import get_adapters, save_adapter
-from .. import db
+from .. import app, db
 from ..model.statistics import stats_new_receipt
 
 if TYPE_CHECKING:
@@ -26,6 +26,6 @@ def process_all():
         with db.transaction():
             for r in it:
                 r.save()
-                print(r)
+                app.logger.debug(r)
                 stats_new_receipt(r)
             save_adapter(aid, adapter)

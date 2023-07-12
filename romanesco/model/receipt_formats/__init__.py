@@ -41,7 +41,6 @@ def parse(fp):
                 ):
                     interpreter.process_page(page)
                 txt = output_string.getvalue()
-                print(txt)
 
         if fmt.identify(txt):
             return fmt.parse(txt)

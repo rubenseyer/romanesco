@@ -24,7 +24,7 @@ def receipt_new():
         r = Receipt.new(datetime.fromtimestamp(d['timestamp']), d['comment'])
         _process_items_json(r, d['items'])
         r.save()
-        print(r)
+        app.logger.debug(r)
         stats_new_receipt(r)
     return redirect(url_for('overview'), code=303)
 
@@ -53,7 +53,7 @@ def receipt_edit(id):
                 _process_items_json(r, d['items'])
                 for tbd in d['deletedItems']:
                     r.delete_item(tbd)
-                print(r)
+                app.logger.debug(r)
                 r.save()
                 stats_update_receipt(r_old, r)
             # fall out to return overview

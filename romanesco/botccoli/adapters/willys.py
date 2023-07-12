@@ -71,7 +71,7 @@ class WillysAdapter(BaseAdapter):
 
                 current_page = j['paginationData']['currentPage']
                 number_of_pages = j['paginationData']['numberOfPages']
-                print(f'page: {current_page}/{number_of_pages}')
+                self.logger.info(f'page: {current_page}/{number_of_pages}')
                 for transact in j['loyaltyTransactionsInPage']:
                     if not transact['digitalReceiptAvailable']:
                         continue
@@ -83,7 +83,7 @@ class WillysAdapter(BaseAdapter):
                         first = False
                     if cur_id == stop_id:
                         return
-                    print(cur_date, ' - ', cur_id)
+                    self.logger.info(cur_date, ' - ', cur_id)
                     resp = s.get(_receipt_pdf(**transact))
                     resp.raise_for_status()
                     yield BytesIO(resp.content)

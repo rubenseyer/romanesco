@@ -46,11 +46,12 @@ class BaseAdapter(ABC):
             # empty is ok
             pass
         except NeedsReauthenticationError:
-            print('authenticating...')
+            self.logger.info('authenticating...')
             self.authenticate()
             g = self.iter_receipt_fps()
         l = [parse_receipt(fp) for fp in g]
         return iter(l) if not self.reversed else reversed(l)
+
 
     @abstractmethod
     def authenticate(self) -> None:
@@ -59,6 +60,10 @@ class BaseAdapter(ABC):
     @abstractmethod
     def iter_receipt_fps(self) -> Generator[BinaryIO, None, None]:
         raise NotImplementedError
+
+    @property
+    def logger(self) -> 'logging.Logger':
+        return app.logger
 
 
 @contextmanager

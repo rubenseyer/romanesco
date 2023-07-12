@@ -92,7 +92,6 @@ class Receipt:
                 if item.id is None:
                     item.find_or_create()
                 c.execute('update items set last_use = ? where id = ?', (ts, item.id))
-                print((item.id, self.id, item.quantity, item.price, ix))
                 c.execute(
                     'insert into receipts_items (item_id, receipt_id, quantity, price, sort) values (?, ?, ?, ?, ?) \
                      on conflict(item_id,receipt_id) do update set quantity = excluded.quantity, price = excluded.price, sort = excluded.sort',

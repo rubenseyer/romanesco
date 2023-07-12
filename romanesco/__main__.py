@@ -25,13 +25,13 @@ def main():
     if use_bjoern:
         from logging import Formatter
         from flask.logging import default_handler
-        print(f'Romanesco @ {host}:{port}')
+        app.logger.info(f'Romanesco @ {host}:{port}')
         app.logger.setLevel('INFO')
         default_handler.setFormatter(Formatter(fmt='%(message)s'))
         try:
             bjoern.run(app, host, port, reuse_port=True)
         except KeyboardInterrupt:
-            print('Interrupted')
+            app.logger.warn('Interrupted')
             try:
                 sys.exit(0)
             except SystemExit:
