@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 from time import perf_counter_ns
 
-from .. import app, db
+from ... import app, db
 from ..receipt import Receipt
 
 

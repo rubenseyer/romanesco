@@ -97,7 +97,8 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
 
 
 def identify(txt):
-    return 'Willys' in txt
+    # Also allow hemköp!
+    return 'Willys' in txt or 'Poänggrundande' in txt
 
 
 def laparams():

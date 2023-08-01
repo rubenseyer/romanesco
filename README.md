@@ -6,13 +6,13 @@ later aggregating and exporting for use in further accounting.
 The main use case is at point-of-purchase and as a general overview
 of the current situation.
 
-The system comes with support for parsing digital receipts from two of the biggest
-grocery store chains in Sweden, ICA and Willys.
+The system comes with support for parsing digital receipts from a few of the biggest
+grocery store chains in Sweden: ICA, Willys and Hemköp.
 
 Romanesco 'learns' the categorization of articles (by referencing the latest instance in the database),
 so it quickly almost automatically categorizes uploaded receipts.
 
-In addition, there is **beta** support for automatically retrieving these receipts from Willys,
+In addition, there is **beta** support for automatically retrieving these receipts from Willys and Hemköp,
 using the automation component _botccoli_.
 
 ## Installation

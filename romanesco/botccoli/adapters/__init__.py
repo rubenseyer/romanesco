@@ -99,10 +99,6 @@ if TYPE_CHECKING:
     from typing import Union, Optional
 
 
-def adapter_classes() -> dict[str,type[BaseAdapter]]:
-    return {cls.key: cls for cls in BaseAdapter.__subclasses__()}
-
-
 def get_adapters() -> dict[int, BaseAdapter]:
     fernet = Fernet(app.config['SECRET_KEY'])
     adapters_cls = adapter_classes()
@@ -154,7 +150,11 @@ def save_adapter(config_id: int, ada: BaseAdapter) -> None:
             where config_id = ?', (ada.last_id, last_date, cookies, config_id))
 
 
-from . import willys
+from .axfood import WillysAdapter, HemkopAdapter
+
+
+def adapter_classes() -> dict[str,type[BaseAdapter]]:
+    return {cls.key: cls for cls in (WillysAdapter, HemkopAdapter)}
 
 
 

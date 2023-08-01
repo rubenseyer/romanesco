@@ -52,7 +52,6 @@ class ReceiptParseWarning(UserWarning):
     pass
 
 
-from . import ica
-from . import willys
+from . import ica, axfood
 
-_formats = [ica, willys]
+_formats = [ica, axfood]

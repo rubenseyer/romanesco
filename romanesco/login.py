@@ -29,6 +29,7 @@ def before_request():
             user_name = 'User'
             row = c.execute('insert into users (name, net) values (?,?) returning id', (user_name, Decimal('0'))).fetchone()
             assert row[0] == user_id
+    c.close()  # close cursor here to avoid insert race
 
     g.user_id = session['user_id'] = user_id
     g.user_name = session['user_name'] = user_name
