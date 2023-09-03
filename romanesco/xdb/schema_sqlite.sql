@@ -38,7 +38,8 @@ create index if not exists ix_receipts_items_receipt_id on receipts_items(receip
 create table if not exists users (
     id      integer primary key,
     name    text unique not null,
-    net     decimal_clob not null
+    net     decimal_clob not null,
+    email   text
 );
 
 create table if not exists deposits (
