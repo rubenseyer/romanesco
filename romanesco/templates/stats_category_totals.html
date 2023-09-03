@@ -3,6 +3,6 @@
 {% block title %}Statistik: kategorier &mdash; Romanesco{% endblock %}
 {% block body %}
     <div>
-        {{ gtable('Period', categories, statistics) }}
+        {{ gtable('Period', categories, statistics, totalfirst=true) }}
     </div>
 {% endblock body %}
