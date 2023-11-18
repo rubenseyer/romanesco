@@ -23,8 +23,8 @@ def stats_full_recompute():
         tic = perf_counter_ns()
         for user_id, amount in c.execute('select user_id, amount from deposits order by timestamp'):
             stats_new_deposit(user_id, amount)
-        tic = perf_counter_ns()
         app.logger.info(f'Deposits added in {(perf_counter_ns() - tic) * 1e-6} ms')
+        tic = perf_counter_ns()
         for rid in c.execute('select id from receipts order by id'):
             r = Receipt.get(rid[0])
             r.save(update_items=False)
@@ -89,13 +89,13 @@ def _inc_net(c: 'db.Cursor', user_id: int, amount: Decimal):
 
 def _inc_total(c: 'db.Cursor', user_id: int, category_id: Optional[int], ts: datetime, amount: Decimal):
     row = c.execute('select total from stats_total where user_id = ? and (category_id is not distinct from ?) and year = ? and month = ?',
-                    (user_id, category_id, ts.year, ts.month)).fetchone()
+                    (user_id, category_id, *period(ts))).fetchone()
     if row is None:
         c.execute('insert into stats_total (total, user_id, category_id, year, month) values (?,?,?,?,?)',
-                  (amount, user_id, category_id, ts.year, ts.month))
+                  (amount, user_id, category_id, *period(ts)))
     else:
         c.execute('update stats_total set total = ? where user_id = ? and (category_id is not distinct from ?) and year = ? and month = ?',
-                  ((row[0] + amount), user_id, category_id, ts.year, ts.month))
+                  ((row[0] + amount), user_id, category_id, *period(ts)))
 
 
 def _inc_avg(c: 'db.Cursor', user_id: int, category_id: Optional[int], ts: datetime, amount: Decimal):
@@ -107,3 +107,20 @@ def _inc_avg(c: 'db.Cursor', user_id: int, category_id: Optional[int], ts: datet
     else:
         c.execute('update stats_days set total = ? where user_id = ? and (category_id is not distinct from ?) and day = ?',
                   ((row[0] + amount), user_id, category_id, ts.day))
+
+
+def period(ts: datetime, end=app.config['PERIOD_END']) -> (int, int):
+    # If PERIOD_END is set to zero, we use the calendar as is.
+    # This was the previous default.
+    if end == 0:
+        return ts.year, ts.month
+    # Otherwise, the current month contains everything up to and including
+    # the end date, and anything after that gets pushed forward.
+    # This would then work like a credit card.
+    year, month = ts.year, ts.month
+    if ts.day > end:
+        month += 1
+    if month == 13:
+        year += 1
+        month = 1
+    return year, month

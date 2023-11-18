@@ -22,6 +22,7 @@ if 'SECRET_KEY' not in os.environ:
 app.config.update(
     DATABASE=os.environ.get('DATABASE', 'sqlite://./romanesco.db'),
     SECRET_KEY=os.environ.get('SECRET_KEY', 'secretsecretsecretsecretsecretsecretsecretx='),
+    PERIOD_END=int(os.environ.get('PERIOD_END', '14')),
 )
 
 db = connect_db(app.config['DATABASE'])
