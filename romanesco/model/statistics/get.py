@@ -5,6 +5,7 @@ from typing import Optional
 from itertools import groupby
 
 from ...util import dense
+from .update import period
 from .util_dateocc import date_occurrences
 
 from .. import db
@@ -23,7 +24,7 @@ def stats_overview(user_id: int):
     # Current month total
     row = c.execute(
         'select total from stats_total where user_id = ? and category_id is null and year = ? and month = ?',
-        (user_id, today.year, today.month)
+        (user_id, *period(today))
     ).fetchone()
     current_month = floor(row[0]) if row is not None else 0
 
@@ -33,7 +34,7 @@ def stats_overview(user_id: int):
     # Category totals
     rows = c.execute(
         'select c.name, total from stats_total left join categories c on category_id = c.id where user_id = ? and category_id is not null and year = ? and month = ?',
-        (user_id, today.year, today.month)
+        (user_id, *period(today))
     )
     category_stats = {row[0]: floor(row[1]) for row in rows}
 
