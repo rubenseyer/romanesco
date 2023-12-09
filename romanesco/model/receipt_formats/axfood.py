@@ -55,7 +55,7 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
         # Indented
         else:
             # Promo
-            if (':' in seg[1] or seg[1].startswith('Prisneds') or seg[1].startswith('Nytt pris')) and len(seg) >= 3:
+            if (':' in seg[1] or 'Prisneds' in seg[1] or 'Nytt pris' in seg[1]) and len(seg) >= 3:
                 price += parse_decimal(seg[-1]) / quantity
             # Addon
             elif '+' in seg[1]:
@@ -98,7 +98,7 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
 
 def identify(txt):
     # Also allow hemköp!
-    return 'Willys' in txt or 'Poänggrundande' in txt
+    return 'Willys' in txt or 'Medlemsnummer' in txt
 
 
 def laparams():
