@@ -39,7 +39,8 @@ create table if not exists users (
     id      integer primary key generated always as identity,
     name    text unique not null,
     net     numeric not null,
-    email   text
+    email   text,
+    target  numeric
 );
 
 create table if not exists deposits (

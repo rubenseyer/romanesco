@@ -7,8 +7,10 @@
             <div><span class="amount">{{ current_month }}</span>&nbsp;<span class="currency">kr</span></div>
         </div>
         <div>
-            <div>Genomsnitt nu</div>
-            <div><span class="amount">{{ avg_this_day }}</span>&nbsp;<span class="currency">kr</span></div>
+            {% if target is not none %}
+            <div>Kvar i budget</div>
+            <div><span class="amount {{ 'red' if target < current_month else '' }}">{{ target - current_month }}</span>&nbsp;<span class="currency">kr</span></div>
+            {% endif %}
         </div>
         <div>
             <div>Tillgodo</div>
@@ -32,7 +34,7 @@
                 <span class="action" title="Fler alternativ" tabindex="0">&#9660;</span>
                 <div class="dropdown-content">
                     <a href="{{ url_for('stats') }}">&#x1f4b8;&#x1f4ca;&nbsp;Statistik</a>
-                    <a href="{{ url_for('stats_statement') }}">&#x1f4b8;&#x1f7f0;&nbsp;Kontoutdrag</a>
+                    <a href="{{ url_for('stats_statement') }}">&#x1f4b8;&#x1f7f0;&nbsp;Netton</a>
                     <a href="{{ url_for('debug_stats_recompute') }}">Beräkna om allt (debug)</a>
                     <a href="https://github.com/rubenseyer/romanesco">Om Romanesco</a>
                 </div>

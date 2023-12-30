@@ -12,10 +12,10 @@ from ..util import round_even
 
 def notify_totals(cfg, smtp):
     c = db.cursor()
-    users = list(c.execute('select id, name, net, email from users where email is not null order by id'))
+    users = list(c.execute('select id, name, net, email, target from users where email is not null order by id'))
     when = datetime.today().replace(day=1) - timedelta(days=1)
 
-    for user_id, name, net, email in users:
+    for user_id, name, net, email, target in users:
         totals = {
             category_id: (name, total)
             for category_id, name, total in c.execute('''\
@@ -27,10 +27,10 @@ def notify_totals(cfg, smtp):
                 (user_id, when.year, when.month)
             )
         }
-        total_avg_delta = round_even(totals[None][1] - _avg_this_day(c,user_id,None,when))
+        delta = round_even(totals[None][1] - target) if target is not None else 0
 
         stats_table_raw = [
-            [name, round_even(total), _avg_this_day(c,user_id,category_id,when)]
+            [name, round_even(total)]
             for category_id, (name, total) in totals.items() if category_id is not None
         ]
 
@@ -39,11 +39,11 @@ def notify_totals(cfg, smtp):
 Hej {name}!
         
 Förra månaden spenderade du {totals[None][1]} kr.
-Det är {abs(total_avg_delta)} kr {"mer" if total_avg_delta > 0 else "mindre"} än ditt genomsnitt.
+Det är {abs(delta)} kr {"mer" if delta < 0 else "mindre"} än budget.
 Ditt tillgodo är därmed {net} kr.
        
 Detaljerad statistik:
-{tabulate(stats_table_raw, headers=['Kategori', 'Summa', 'Medel'], tablefmt='rounded_outline', floatfmt='.2f')}
+{tabulate(stats_table_raw, headers=['Kategori', 'Summa'], tablefmt='rounded_outline', floatfmt='.2f')}
        
 \U0001F966 https://romanesco.hkg.ovh/ \
         '''
@@ -53,18 +53,18 @@ Detaljerad statistik:
 <p>Hej {name}!</p>
 <p>
 Förra månaden spenderade du <strong>{totals[None][1]} kr</strong>.<br>
-Det är {abs(total_avg_delta)} kr {"mer" if total_avg_delta > 0 else "mindre"} än ditt genomsnitt.<br>
+Det är {abs(delta)} kr {"mer" if delta < 0 else "mindre"} än budget.<br>
 Ditt tillgodo är därmed <strong>{net} kr</strong>.
 </p>
 <p>
 Detaljerad statistik:
-{tabulate(stats_table_raw, headers=['Kategori', 'Summa', 'Medel'], tablefmt='html', floatfmt='.2f')}
+{tabulate(stats_table_raw, headers=['Kategori', 'Summa'], tablefmt='html', floatfmt='.2f')}
 </p>   
 <p>\U0001F966 <a href="https://romanesco.hkg.ovh/">Romanesco</a></p>
 </body>
 </html>\
         '''
-        msg['Subject'] = f'\U0001F966 Romanesco {when.strftime("%b")}: {floor(totals[None][1])} kr'  # Put total in subject
+        msg['Subject'] = f'\U0001F966 Romanesco {when.strftime("%b")}: {round_even(totals[None][1])} kr'  # Put total in subject
         msg['From'] = cfg['MAIL_DEFAULT_SENDER']
         msg['To'] = email
         msg.attach(MIMEText(plain, 'plain'))

@@ -124,3 +124,9 @@ def period(ts: datetime, end=app.config['PERIOD_END']) -> (int, int):
         year += 1
         month = 1
     return year, month
+
+
+def target_set(user_id: int, target: Decimal):
+    with db.transaction():
+        c = db.cursor()
+        c.execute('update users set target = ? where id = ?', (target, user_id))

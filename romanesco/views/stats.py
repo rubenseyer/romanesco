@@ -1,5 +1,5 @@
 from flask import g, redirect, url_for, render_template
-from ..model.statistics import stats_full_recompute, stats_category_table, stats_user_table
+from ..model.statistics import stats_full_recompute, stats_category_table, stats_user_table, target_set
 from .. import app
 
 
@@ -17,5 +17,21 @@ def stats():
 
 @app.route('/stats/statement')
 def stats_statement():
-    users, table = stats_user_table()
-    return render_template('stats_user_totals.html', users=users, statistics=table)
+    users, table, targets = stats_user_table()
+    return render_template('stats_user_totals.html', users=users, statistics=table, target=targets[g.user_id])
+
+
+@app.route('/stats/budget', method=['POST'])
+def stats_budget():
+    try:
+        target = Decimal(request.form['target'])
+    except KeyError:
+        # missing from form
+        abort(400)
+    except ValueError:
+        # parse error
+        abort(400)
+
+    target_set(g.user_id, target)
+
+    return redirect(url_for('overview'), code=303)
