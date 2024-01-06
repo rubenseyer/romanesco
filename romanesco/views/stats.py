@@ -19,7 +19,7 @@ def stats():
 @app.route('/stats/statement')
 def stats_statement():
     users, table, targets = stats_user_table()
-    return render_template('stats_user_totals.html', users=users, statistics=table, target=targets[g.user_id])
+    return render_template('stats_user_totals.html', users=users, statistics=table, target=targets[g.user_id-1])
 
 
 @app.route('/stats/budget', methods=['POST'])
