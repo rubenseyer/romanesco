@@ -1,4 +1,5 @@
-from flask import g, redirect, url_for, render_template
+from decimal import Decimal
+from flask import g, redirect, url_for, render_template, abort, request
 from ..model.statistics import stats_full_recompute, stats_category_table, stats_user_table, target_set
 from .. import app
 
@@ -21,7 +22,7 @@ def stats_statement():
     return render_template('stats_user_totals.html', users=users, statistics=table, target=targets[g.user_id])
 
 
-@app.route('/stats/budget', method=['POST'])
+@app.route('/stats/budget', methods=['POST'])
 def stats_budget():
     try:
         target = Decimal(request.form['target'])

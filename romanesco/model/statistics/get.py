@@ -19,7 +19,7 @@ def stats_overview(user_id: int):
     row = c.execute('select net, target from users where id = ?', (user_id,)).fetchone()
     if row is None:
         raise LookupError(f'could not find user {user_id}')
-    net, target = floor(row[0]), floor(row[1])
+    net, target = floor(row[0]), floor(row[1]) if row[1] is not None else None
 
     # Current month total
     row = c.execute(
