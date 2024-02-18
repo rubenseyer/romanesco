@@ -69,10 +69,13 @@ class BaseAdapter(ABC):
 @contextmanager
 def with_driver(ba: BaseAdapter) -> Generator[WebDriver, None, None]:
     options = webdriver.FirefoxOptions()
+    if (binary_location := os.environ.get('FIREFOX')) is not None:
+        options.binary_location = binary_location
     options.add_argument('--width=1680')
     options.add_argument('--height=900')
-    options.headless = True
-    driver = webdriver.Firefox(options=options, service_log_path=os.devnull)
+    options.add_argument('--headless')
+    service = webdriver.FirefoxService(executable_path=os.environ.get('GECKODRIVER'), log_output=os.devnull)
+    driver = webdriver.Firefox(options=options, service=service)
     try:
         yield driver
         ba.cookies = {cookie['name']: cookie['value'] for cookie in driver.get_cookies()}
@@ -85,7 +88,7 @@ def with_driver(ba: BaseAdapter) -> Generator[WebDriver, None, None]:
 def with_session(ba: BaseAdapter) -> Generator[requests.Session, None, None]:
     s = requests.Session()
     s.headers.update({
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0',
     })
     s.cookies.update(ba.cookies)
 
