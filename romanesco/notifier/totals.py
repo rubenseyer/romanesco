@@ -1,19 +1,24 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
-from math import floor
 
 from tabulate import tabulate
 
-from .. import db
-from ..model.statistics.get import _avg_this_day
+from .. import app, db
+from ..model.statistics.update import period
 from ..util import round_even
 
 
 def notify_totals(cfg, smtp):
     c = db.cursor()
     users = list(c.execute('select id, name, net, email, target from users where email is not null order by id'))
-    when = datetime.today().replace(day=1) - timedelta(days=1)
+    today = datetime.today()
+    if app.config['PERIOD_END'] > 0:
+        period_year, period_month = period(today)
+        when = today.replace(year=period_year, month=period_month, day=app.config['PERIOD_END'])
+    else:
+        when = today.replace(day=1) - timedelta(days=1)  # last day of previous month
+        period_year, period_month = when.year, when.month
 
     for user_id, name, net, email, target in users:
         totals = {
@@ -24,7 +29,7 @@ def notify_totals(cfg, smtp):
                 where s.user_id = ? and s.year = ? and s.month = ?
                 order by s.category_id asc nulls first
                 ''',
-                (user_id, when.year, when.month)
+                (user_id, period_year, period_month)
             )
         }
         delta = round_even(totals[None][1] - target) if target is not None else 0
