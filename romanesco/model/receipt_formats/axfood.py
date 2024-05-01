@@ -38,6 +38,9 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
         # Stop at next --- separator
         if line.startswith('-'):
             break
+        # Some truncations have appeared which breaks spacing -> fixup
+        line = line.replace('..', '  ')
+
         seg = re.split('  +', line)  # Segments by spacing
         # Unindented
         if seg[0]:
@@ -45,11 +48,17 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
             if len(seg) >= 3 and '*' in seg[-2]:
                 name = ' '.join(seg[0:-2])
                 quantity, price = _starexpr(seg[-2])
-                assert round(quantity * price) == parse_decimal(seg[-1])
+                if round(quantity * price) != parse_decimal(seg[-1]):
+                    tot = parse_decimal(seg[-1])
+                    warnings.warn(ReceiptParseWarning(
+                        f'Item {name} parsed total mismatch: got {round(quantity * price)}, expected {tot}. Should the quantity be {round(tot / price, Decimal("0.001"))}?'))
             elif len(seg) >= 2:
                 name = ' '.join(seg[0:-1])
                 quantity = Decimal(1)
                 price = parse_decimal(seg[-1])
+            elif len(seg) == 1:
+                # It seems we can have single item lines. Parse the name and go around
+                name = seg[0]
             else:
                 warnings.warn(ReceiptParseWarning(f'Nonconforming item line "{line}"'))
         # Indented
@@ -62,10 +71,17 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
                     if len(seg) == 4:
                         addq, addp = _starexpr(seg[2])
                         price += addp
-                        assert addq == quantity
-                        assert round(addq*addp) == parse_decimal(seg[3])
+                        if addq != quantity:
+                            warnings.warn(ReceiptParseWarning(
+                                f'Item {name} addon ({seg[1]}) quantity {addq} != quantity {quantity}'))
+                        if round(addq*addp) != parse_decimal(seg[3]):
+                            tot = parse_decimal(seg[3])
+                            warnings.warn(ReceiptParseWarning(
+                                f'Item {name} addon {seg[1]} parsed total mismatch: got {round(addq*addp)}, expected {tot}. Should the quantity be {round(tot / addp, Decimal("0.001"))}?'))
                     elif len(seg) == 3:
-                        assert quantity == 1
+                        if quantity != 1:
+                            warnings.warn(ReceiptParseWarning(
+                                f'Item {name} addon ({seg[1]}) without quantity, but item quantity {quantity} != 1'))
                         price += parse_decimal(seg[2])
             # Quantified
             elif '*' in seg[1]:
@@ -80,7 +96,7 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
         i += 1
     total = parse_decimal(lines[i].split()[-2])
     # Read timestamp
-    # Used to be last non-empty line. Now its better to look backwards for "Kassa:"
+    # Used to be last non-empty line. Now it's better to look backwards for "Kassa:"
     for line in filter(None, reversed(lines)):
         if line.startswith('Kassa:'):
             timestamp = ymdhm_to_dt(*line.split()[2:4])

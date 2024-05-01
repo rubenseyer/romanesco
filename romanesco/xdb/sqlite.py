@@ -2,6 +2,10 @@ from decimal import Decimal
 import apsw
 import apsw.ext
 
+import apsw.bestpractice
+
+apsw.bestpractice.apply(apsw.bestpractice.recommended)
+
 
 class XdbSqlite:
     type: str = 'sqlite'
@@ -15,7 +19,7 @@ class XdbSqlite:
         registrar = apsw.ext.TypesConverterCursorFactory()
         self.db.cursor_factory = registrar
         registrar.register_adapter(Decimal, str)
-        registrar.register_converter('decimal_clob', Decimal)
+        registrar.register_converter('decimal_clob', decimal_clob)
 
         # tracer for debugging
         # def exectracer(cursor, statement, bindings) -> bool:
@@ -30,3 +34,9 @@ class XdbSqlite:
     def cursor(self):
         return self.db.cursor()
 
+    def close(self):
+        return self.db.close()
+
+
+def decimal_clob(s: str) -> None | Decimal:
+    return Decimal(s) if s is not None else None

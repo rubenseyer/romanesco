@@ -1,6 +1,6 @@
 import sys
 import os
-from . import app
+from . import app, db
 
 
 def main():
@@ -31,7 +31,8 @@ def main():
         try:
             bjoern.run(app, host, port, reuse_port=True)
         except KeyboardInterrupt:
-            app.logger.warn('Interrupted')
+            app.logger.warning('Interrupted')
+            db.close()
             try:
                 sys.exit(0)
             except SystemExit:

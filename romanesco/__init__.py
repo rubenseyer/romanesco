@@ -1,7 +1,6 @@
 import os
 import datetime
 from importlib.resources import files
-import warnings
 
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -15,9 +14,9 @@ app.wsgi_app = LoggerMiddleware(app.wsgi_app, app.logger)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 if 'DATABASE' not in os.environ:
-    warnings.warn('No database configured... defaulting to local directory.')
+    app.logger.warning('No database configured... defaulting to local directory.')
 if 'SECRET_KEY' not in os.environ:
-    warnings.warn('No secret key configured... defaulting to dummy key.')
+    app.logger.warning('No secret key configured... defaulting to dummy key.')
 
 app.config.update(
     DATABASE=os.environ.get('DATABASE', 'sqlite://./romanesco.db'),

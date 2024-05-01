@@ -14,6 +14,9 @@ class XdbPostgresql:
     def cursor(self):
         return self.db.cursor()
 
+    def close(self):
+        return self.db.close()
+
 
 # Dirty patching to support ? params ....
 from psycopg._queries import PostgresQuery
