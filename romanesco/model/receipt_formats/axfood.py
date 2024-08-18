@@ -64,7 +64,7 @@ def parse(txt: str) -> tuple[datetime, str, list[tuple[str, Decimal, Decimal, No
         # Indented
         else:
             # Promo
-            if (':' in seg[1] or 'Prisneds' in seg[1] or 'Nytt pris' in seg[1]) and len(seg) >= 3:
+            if (':' in seg[1] or 'Prisneds' in seg[1] or 'Nytt pris' in seg[1]) and len(seg) >= 3 and seg[-1]:
                 price += parse_decimal(seg[-1]) / quantity
             # Addon
             elif '+' in seg[1]:
