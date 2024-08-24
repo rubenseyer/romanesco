@@ -14,8 +14,8 @@ def notify_totals(cfg, smtp):
     users = list(c.execute('select id, name, net, email, target from users where email is not null order by id'))
     today = datetime.today()
     if app.config['PERIOD_END'] > 0:
-        period_year, period_month = period(today)
-        when = today.replace(year=period_year, month=period_month, day=app.config['PERIOD_END'])
+        # we just consider the period that ends current month.
+        period_year, period_month = today.year, today.month
     else:
         when = today.replace(day=1) - timedelta(days=1)  # last day of previous month
         period_year, period_month = when.year, when.month
