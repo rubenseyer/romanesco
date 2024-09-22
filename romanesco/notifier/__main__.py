@@ -1,5 +1,6 @@
 import os
 import smtplib
+import ssl
 import sys
 
 from .totals import notify_totals
@@ -18,8 +19,6 @@ def main():
         MAIL_USE_TLS=os.environ.get('MAIL_USE_TLS', os.environ.get('MAIL_PORT') == '587'),
         MAIL_USE_SSL=os.environ.get('MAIL_USE_SSL', os.environ.get('MAIL_PORT') == '465'),
         MAIL_TIMEOUT=os.environ.get('MAIL_TIMEOUT'),
-        MAIL_SSL_KEYFILE=os.environ.get('MAIL_SSL_KEYFILE'),
-        MAIL_SSL_CERTFILE=os.environ.get('MAIL_SSL_CERTFILE'),
         MAIL_DEFAULT_SENDER=os.environ.get('MAIL_DEFAULT_SENDER', 'romanesco@localhost')
     )
     if cfg['MAIL_USE_TLS'] and cfg['MAIL_USE_SSL']:
@@ -37,14 +36,13 @@ def smtp_connect(cfg):
         timeout=cfg['MAIL_TIMEOUT']
     )
     if cfg['MAIL_USE_SSL']:
-        constructor = smtplib.SMTP_SSL
-        kwargs['keyfile'] = cfg['MAIL_SSL_KEYFILE']
-        kwargs['certfile'] = cfg['MAIL_SSL_CERTFILE']
+        ssl_context = ssl.create_default_context()
+        smtp = smtplib.SMTP_SSL(**kwargs, context=ssl_context)
     else:
-        constructor = smtplib.SMTP
-    smtp = constructor(**kwargs)
+        smtp = smtplib.SMTP(**kwargs)
     if cfg['MAIL_USE_TLS']:
-        smtp.starttls(keyfile=cfg['MAIL_SSL_KEYFILE'], certfile=cfg['MAIL_SSL_CERTFILE'])
+        ssl_context = ssl.create_default_context()
+        smtp.starttls(context=ssl_context)
     if cfg['MAIL_USERNAME'] is not None:
         smtp.login(cfg['MAIL_USERNAME'], cfg['MAIL_PASSWORD'])
     return smtp

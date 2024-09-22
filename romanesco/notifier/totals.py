@@ -1,6 +1,6 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime, timedelta
+from datetime import datetime, date
 
 from tabulate import tabulate
 
@@ -12,13 +12,12 @@ from ..util import round_even
 def notify_totals(cfg, smtp):
     c = db.cursor()
     users = list(c.execute('select id, name, net, email, target from users where email is not null order by id'))
-    today = datetime.today()
-    if app.config['PERIOD_END'] > 0:
-        # we just consider the period that ends current month.
-        period_year, period_month = today.year, today.month
+    period_year, period_month = period(datetime.today())
+    if period_month == 1:
+        period_year, period_month = period_year - 1, 12
     else:
-        when = today.replace(day=1) - timedelta(days=1)  # last day of previous month
-        period_year, period_month = when.year, when.month
+        period_month -= 1
+    when = date(period_year, period_month, 1)
 
     for user_id, name, net, email, target in users:
         totals = {
@@ -48,7 +47,7 @@ Det är {abs(delta)} kr {"mer" if delta < 0 else "mindre"} än budget.
 Ditt tillgodo är därmed {net} kr.
        
 Detaljerad statistik:
-{tabulate(stats_table_raw, headers=['Kategori', 'Summa'], tablefmt='rounded_outline', floatfmt='.2f')}
+{tabulate(stats_table_raw, headers=['Kategori', 'Summa'], floatfmt='.2f')}
        
 \U0001F966 https://romanesco.hkg.ovh/ \
         '''
