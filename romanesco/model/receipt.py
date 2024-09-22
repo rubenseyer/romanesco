@@ -8,9 +8,24 @@ from ..util import round, round_even, splits_from_str
 from .. import db
 
 
-def parse_receipt(fp) -> 'Receipt':
+def parse_receipt(fp, combine=False) -> 'Receipt':
     timestamp, comment, items = parse(fp)
-    return Receipt(None, timestamp, comment.strip(), list(map(Item.from_parsed, items)), automatic=True)
+    if not combine:
+        parsed_items = list(map(Item.from_parsed, items))
+    else:
+        # Try to combine lines that would be overwritten
+        disambiguated_items = {}
+        for raw in items:
+            new_item = Item.from_parsed(raw)
+            if new_item.name not in disambiguated_items:
+                disambiguated_items[new_item.name] = new_item
+            else:
+                old_item = disambiguated_items[new_item.name]
+                total = new_item.quantity * new_item.price + old_item.quantity * old_item.price
+                old_item.quantity += old_item.quantity
+                old_item.price = total / old_item.quantity
+        parsed_items = list(disambiguated_items.values())
+    return Receipt(None, timestamp, comment.strip(), parsed_items, automatic=True)
 
 
 class Receipt:

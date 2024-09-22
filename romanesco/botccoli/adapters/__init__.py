@@ -49,7 +49,7 @@ class BaseAdapter(ABC):
             self.logger.info('authenticating...')
             self.authenticate()
             g = self.iter_receipt_fps()
-        l = [parse_receipt(fp) for fp in g]
+        l = [parse_receipt(fp, combine=True) for fp in g]
         return iter(l) if not self.reversed else reversed(l)
 
 
