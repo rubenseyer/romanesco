@@ -27,14 +27,8 @@ def parse(txt):
     items = []
     while True:
         # Forward until EAN
-        if lines[i].startswith('Total:'):
+        if lines[i].startswith('Betalat') or lines[i].startswith('Total:'):
             break
-        elif lines[i].startswith('- '):
-            # Probably a discount on the previous line
-            dis = parse_decimal(lines[i][2:])
-            n, q, p, ean = items[-1]
-            items[-1] = (n, q, p - dis/q, ean)
-            i += 2
         #elif 'Pant' in lines[i]:
         #    # Add bottle deposit
         #    pantp, pantq = parse_decimal(lines[i+2]), parse_decimal(lines[i+4])
@@ -51,13 +45,33 @@ def parse(txt):
             # Try to find a total
             try:
                 tot = parse_decimal(lines[i+6])
+                # Discounts are not included. Try to update it below
+                if lines[i-2].startswith('*'):
+                    j = i-2
+                    # we have to go backwards to find the total number of contiguous discount items
+                    while j >= 10 and lines[j-10].startswith('*'):
+                        j -= 10
+                    # then go forwards to find the discount:
+                    total_discount_lines = 1
+                    while lines[j + 10].startswith('*'):
+                        j += 10
+                        total_discount_lines += 1
+                    #print(n, total_discount_lines)
+                    if lines[j+12].startswith('-'):
+                        # Probably a discount on the previous line
+                        tot -= parse_decimal(lines[j+12][1:]) / total_discount_lines
             except decimal.InvalidOperation:
-                try:
-                    tot = parse_decimal(lines[i-4])
-                except decimal.InvalidOperation:
-                    tot = None
+                #try:
+                #    tot = parse_decimal(lines[i-4])
+                #except decimal.InvalidOperation:
+                #    tot = None
+                tot = None
             if tot is not None and tot != round(q * p):
-                warnings.warn(ReceiptParseWarning(f'Item {n} parsed total mismatch: got {round(q * p)}, expected {tot}. Should the quantity be {round(tot/p, Decimal("0.001"))} or is there pant?'))
+                newq = round(tot/p, Decimal("0.001"))
+                warnings.warn(ReceiptParseWarning(f'Item {n} parsed total mismatch: got {round(q * p)}, expected {tot}. Should the quantity be {newq} or is there pant?'))
+                # The system no longer reports quantities correctly. One heuristic is to update q if smaller than 1
+                if newq < 1:
+                    q = newq
             i += 5  # Shortcut no longer safe
             items.append((n, q, p, ean))
         else:
