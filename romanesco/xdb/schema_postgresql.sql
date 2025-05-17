@@ -31,7 +31,7 @@ create table if not exists receipts_items (
     sort        integer not null,
     primary key(item_id, receipt_id),
     foreign key(item_id) references items(id),
-    foreign key(receipt_id) references receipts(id)
+    foreign key(receipt_id) references receipts(id) on delete cascade
 );
 create index if not exists ix_receipts_items_receipt_id on receipts_items(receipt_id);
 

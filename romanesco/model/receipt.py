@@ -65,8 +65,10 @@ class Receipt:
 
     @staticmethod
     def delete(id: int):
-        c = db.cursor()
-        c.execute('delete from receipts where id = ?', (id,))
+        with db.transaction():
+            c = db.cursor()
+            c.execute('delete from receipts_items where receipt_id = ?', (id,))
+            c.execute('delete from receipts where id = ?', (id,))
 
     def __str__(self):
         return '\n'.join([self.comment, str(self.timestamp), '=' * 45]

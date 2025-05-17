@@ -31,15 +31,17 @@ def receipt_new():
 
 @app.route('/receipt/edit/<int:id>', methods=['GET', 'POST', 'DELETE'])
 def receipt_edit(id):
+    try:
+        r = Receipt.get(id)
+    except LookupError:
+        return abort(404)
     match request.method:
         case 'GET':
-            r = Receipt.get(id)
             return render_template('receipt_edit.html',
                                    receipt=r, committed=True,
                                    users=users(), categories=categories(), templates={},
                                    alerts=[])
         case 'POST':
-            r = Receipt.get(id)
             # FUTURE: fix csrf
             d = request.json
             if d['id'] is None or d['id'] != id:
