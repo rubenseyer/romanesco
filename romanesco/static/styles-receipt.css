@@ -12,13 +12,12 @@ input:invalid { color: var(--fg-red); }
 #receipt-form #items {
     display: grid;
     width: auto;
-    grid-template-columns: 3fr repeat(3, 4rem) 2fr 2fr auto;
+    grid-template-columns: minmax(8rem, 3fr) repeat(3, 4rem) 2fr 2fr auto;
     gap: .5rem;
 }
 #receipt-form #items > div {
     display: contents;
 }
-#receipt-form #items input[name=iname] { width: 100%; }
 #receipt-form #items .dirty input { font-style: italic; }
 #receipt-form #items .struck input { text-decoration: line-through; }
 #items .struck input:not([name=iname]), #items .struck select, #items .struck span, #items .struck div { visibility: hidden; }
