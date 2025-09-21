@@ -66,16 +66,9 @@
                 <input type="submit" value="{{ 'Uppdatera' if committed else 'Skapa' }}">
                 {% if committed %}
                     <div>
-                        <a id="template-save" href="#">Spara mall</a>
+                        <a id="copy" href="{{ url_for('receipt_copy', id=receipt.id) }}">Kopiera</a>
                         <a id="delete" href="#">Radera</a>
                     </div>
-                {% elif receipt is none or not receipt.items %}
-                    <select id="template-select">
-                        <option value="" disabled selected>Mallar</option>
-                        {% for id, comment in templates.items() %}
-                            <option value="{{ url_for('receipt_template', id=id) }}">{{ comment }}</option>
-                        {% endfor %}
-                    </select>
                 {% endif %}
             </div>
         </form>
@@ -195,21 +188,7 @@
             }
         })
 
-        let el = document.getElementById('template-save')
-        if (el != null) {
-            el.addEventListener('click', e => {
-                e.preventDefault()
-                fetch('{{ url_for('templates') }}', {
-                    credentials: 'same-origin',
-                    mode: 'same-origin',
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: parseInt(form.dataset.id) || null
-                }).then(response => window.location = response.url)
-            })
-        }
-
-        el = document.getElementById('delete')
+        let el = document.getElementById('delete')
         if (el != null) {
             el.addEventListener('click', e => {
                 e.preventDefault()
@@ -219,13 +198,6 @@
                     method: 'DELETE',
                     headers: {'Content-Type': 'application/json'}
                 }).then(response => window.location = response.url)
-            })
-        }
-
-        el = document.getElementById('template-select')
-        if (el != null) {
-            el.addEventListener('change', e => {
-                window.location = e.target.value
             })
         }
     </script>
