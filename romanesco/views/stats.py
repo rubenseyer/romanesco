@@ -12,7 +12,18 @@ def debug_stats_recompute():
 
 @app.route('/stats')
 def stats():
-    cats, table = stats_category_table(g.user_id)
+    query_user_id = request.args.get('id')
+    if query_user_id is None:
+        cats, table = stats_category_table(g.user_id)
+    else:
+        all_user_ids = [int(x) for x in query_user_id.split(',')]
+        cats, table = stats_category_table(all_user_ids[0])
+        for user_id in all_user_ids[1:]:
+            _, table_new = stats_category_table(user_id)
+            table = [
+                (header, sum1+sum2, [c1+c2 for c1, c2 in zip(cols1, cols2)])
+                for (header, sum1, cols1), (_, sum2, cols2) in zip(table, table_new)
+            ]
     return render_template('stats_category_totals.html', categories=cats, statistics=table)
 
 
