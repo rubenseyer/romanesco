@@ -29,17 +29,9 @@ def parse(txt):
         # Forward until EAN
         if lines[i].startswith('Betalat') or lines[i].startswith('Total:'):
             break
-        #elif 'Pant' in lines[i]:
-        #    # Add bottle deposit
-        #    pantp, pantq = parse_decimal(lines[i+2]), parse_decimal(lines[i+4])
-        #    n, q, p, ean = items[-1]
-        #    if q == pantq:
-        #        items[-1] = (n, q, p + pantp, ean)
-        #    else:
-        #        warnings.warn(ReceiptParseWarning(f'Failed to parse pant {pantq} * {pantp}'))
-        #    i += 5
-        elif lines[i].isdigit() and len(lines[i]) >= 8:
+        elif lines[i].isdigit() and len(lines[i]) >= 7:
             # EAN detected (fully numerical str of sufficient length), register a line
+            # (Actually, new receipts seem to use internal numbers and not EANs anymore...)
             n, ean, p, q = lines[i-2:i+5:2]
             n, ean, p, q = n.lstrip('* '), ean, parse_decimal(p), parse_decimal(q)
             # Try to find a total
@@ -61,17 +53,16 @@ def parse(txt):
                         # Probably a discount on the previous line
                         tot -= parse_decimal(lines[j+12][1:]) / total_discount_lines
             except decimal.InvalidOperation:
-                #try:
-                #    tot = parse_decimal(lines[i-4])
-                #except decimal.InvalidOperation:
-                #    tot = None
                 tot = None
             if tot is not None and tot != round(q * p):
                 newq = round(tot/p, Decimal("0.001"))
-                warnings.warn(ReceiptParseWarning(f'Item {n} parsed total mismatch: got {round(q * p)}, expected {tot}. Should the quantity be {newq} or is there pant?'))
-                # The system no longer reports quantities correctly. One heuristic is to update q if smaller than 1
-                if newq < 1:
+                # Try to explain the mismatch.
+                if lines[i+8] == 'Pant':  # Deposit charge, adjust total(!)
+                    tot += parse_decimal(lines[i+14])
+                elif lines[i+4].endswith('kg'):  # Weight-based item, accept the new quantity
                     q = newq
+                elif tot != round(q * p):  # Give up
+                    warnings.warn(ReceiptParseWarning(f'Item {n} parsed total mismatch: got {round(q * p)}, expected {tot}. Should the quantity be {newq} or is there pant?'))
             i += 5  # Shortcut no longer safe
             items.append((n, q, p, ean))
         else:
