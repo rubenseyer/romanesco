@@ -1,6 +1,6 @@
 [project]
 name = "romanesco"
-version = "1.11.1"
+version = "1.11.2"
 description = "Expenses reporting system"
 urls = {repository = "https://github.com/rubenseyer/romanesco"}
 requires-python = ">=3.12"

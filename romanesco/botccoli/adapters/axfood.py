@@ -91,7 +91,8 @@ class WillysAdapter(BaseAxfoodAdapter):
             submit.click()
 
             WebDriverWait(driver, timeout=30).until(
-                EC.presence_of_element_located((By.XPATH, '//span[text()="Logga ut"]'))
+                EC.presence_of_element_located((By.XPATH, '//p[text()="Handlat"]'))
+                #EC.presence_of_element_located((By.XPATH, '//svg[@aria-label="Inloggad"]'))
             )
 
 
@@ -104,6 +105,19 @@ class HemkopAdapter(BaseAxfoodAdapter):
         with with_driver(self) as driver:
             driver.get('https://www.hemkop.se/mina-sidor/kop')
 
+            time.sleep(3)
+            password_tab = driver.find_element(By.XPATH, '//button[contains(.,"Lösenord")]')
+            password_tab.click()
+            time.sleep(1)
+
+            input_user = driver.find_element(By.XPATH, '//input[@name="j_username"]')
+            input_pass = driver.find_element(By.XPATH, '//input[@name="j_password"]')
+            submit = driver.find_element(By.XPATH, '//button[@type="submit"]')
+            input_user.send_keys(self.user)
+            input_pass.send_keys(self.passwd)
+            submit.click()
+
+            time.sleep(3)
             try:
                 cookie_btn = WebDriverWait(driver, timeout=15).until(
                     EC.element_to_be_clickable((By.ID, 'onetrust-reject-all-handler'))
@@ -116,17 +130,6 @@ class HemkopAdapter(BaseAxfoodAdapter):
                 EC.invisibility_of_element_located((By.CLASS_NAME, 'onetrust-pc-dark-filter'))
             )
             time.sleep(2)  # Headless too fast
-
-            password_tab = driver.find_element(By.XPATH, '//button[contains(.,"Lösenord")]')
-            password_tab.click()
-            time.sleep(1)
-
-            input_user = driver.find_element(By.XPATH, '//input[@name="j_username"]')
-            input_pass = driver.find_element(By.XPATH, '//input[@name="j_password"]')
-            submit = driver.find_element(By.XPATH, '//button[@type="submit"]')
-            input_user.send_keys(self.user)
-            input_pass.send_keys(self.passwd)
-            submit.click()
 
             WebDriverWait(driver, timeout=30).until(
                 EC.presence_of_element_located((By.XPATH, '//p[text()="Logga ut"]'))
