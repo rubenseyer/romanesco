@@ -36,7 +36,7 @@ def main():
         try:
             RomanescoApplication(
                 app,
-                {'bind': f'{host}:{port}', 'reuse_port': True},
+                {'bind': f'{host}:{port}', 'reuse_port': True, 'timeout': 0},
             ).run()
         except KeyboardInterrupt:
             app.logger.warning('Interrupted')
