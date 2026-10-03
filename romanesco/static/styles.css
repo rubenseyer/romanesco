@@ -195,6 +195,46 @@ th:first-child, td:first-child {
     text-align: left;
 }
 
+.category-total {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    padding: 0;
+    cursor: pointer;
+}
+.category-total:hover {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+.category-total:disabled { cursor: wait; }
+.category-transactions { font-size: .8rem; }
+
+.dialog {
+    border: 0;
+    max-width: min(90vw, 64rem);
+    padding: 1rem;
+    width: max-content;
+}
+.dialog::backdrop { background: rgb(47 10 40 / 35%); }
+.dialog-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.dialog-header h2 { font-size: 1.1rem; margin: 0 0 1rem; }
+.dialog-close {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 0 .2rem;
+}
+.dialog-content { overflow-x: auto; }
+
 .dropdown {
     position: relative;
     display: block;

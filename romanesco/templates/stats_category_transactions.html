@@ -1,0 +1,21 @@
+{% if transactions %}
+<table class="category-transactions">
+    <thead>
+        <tr><th>Datum</th><th>Beskrivning</th><th>Artikel</th><th>Antal</th><th>Pris</th><th>Summa</th></tr>
+    </thead>
+    <tbody>
+        {% for id, timestamp, comment, item, user_total in transactions %}
+            <tr>
+                <td><a href="{{ url_for('receipt_edit', id=id) }}">{{ timestamp.strftime('%Y-%m-%d') }}</a></td>
+                <td>{{ comment }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ round(item.price) }}</td>
+                <td>{{ round(user_total) }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Inga transaktioner.</p>
+{% endif %}

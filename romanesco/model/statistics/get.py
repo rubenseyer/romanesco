@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from math import floor
 from typing import Optional
@@ -8,7 +8,9 @@ from ...util import dense
 from .update import period
 from .util_dateocc import date_occurrences
 
+from ... import app
 from .. import db
+from ..receipt import Item
 
 
 def stats_overview(user_id: int):
@@ -55,9 +57,9 @@ def _avg_this_day(c: 'db.Cursor', user_id: int, category_id: Optional[int], now:
     return floor(sum(tots[k]/denoms[k] for k in tots.keys()))
 
 
-def stats_category_table(user_id: int) -> (list[str], list[tuple[str, Decimal, list[Decimal]]]):
+def category_table(user_id: int) -> (list[str], list[tuple[str, Decimal, list[Decimal]]]):
     c = db.cursor()
-    categories = [x[0] for x in c.execute('select name from categories order by id')]
+    categories = list(c.execute('select id, name from categories order by id'))
     rows = c.execute(
         'select year, month, category_id, total from stats_total where user_id = ? order by year desc, month desc, category_id nulls first',
         (user_id,))
@@ -69,7 +71,40 @@ def stats_category_table(user_id: int) -> (list[str], list[tuple[str, Decimal, l
     return categories, table
 
 
-def stats_user_table() -> (list[str], list[tuple[str, list[Decimal]]]):
+def category_transactions(user_ids: list[int], year: int, month: int, category_id: int):
+    c = db.cursor()
+    user_rows = list(c.execute('select id from users order by id'))
+    user_positions = {user_id: position for position, (user_id,) in enumerate(user_rows, start=1)}
+    requested_positions = [user_positions[user_id] for user_id in user_ids if user_id in user_positions]
+    if not requested_positions:
+        return []
+
+    end = app.config['PERIOD_END']
+    if end == 0:
+        start = datetime(year, month, 1)
+        finish = datetime(year + (month == 12), 1 if month == 12 else month + 1, 1)
+    else:
+        finish = datetime(year, month, end) + timedelta(days=1)
+        previous_month = finish.replace(day=1) - timedelta(days=1)
+        start = previous_month.replace(day=end + 1)
+
+    rows = c.execute(
+        'select r.id, r.timestamp, r.comment, ri.item_id, i.name, ri.quantity, ri.price, i.ean, i.splits '
+        'from receipts r join receipts_items ri on ri.receipt_id = r.id '
+        'join items i on i.id = ri.item_id '
+        'where r.timestamp >= ? and r.timestamp < ? and i.category_id = ? '
+        'order by r.timestamp desc, r.id desc, ri.sort',
+        (start.timestamp(), finish.timestamp(), category_id))
+
+    transactions = []
+    for receipt_id, timestamp, comment, item_id, name, quantity, price, ean, splits in rows:
+        item = Item.from_data(item_id, name, quantity, price, ean, splits, category_id)
+        user_total = sum((item.split_total(position, count=len(user_rows)) for position in requested_positions), Decimal(0))
+        transactions.append((receipt_id, datetime.fromtimestamp(timestamp), comment, item, user_total))
+    return transactions
+
+
+def user_table() -> (list[str], list[tuple[str, list[Decimal]]]):
     c = db.cursor()
     users_rows = list(c.execute('select name, net, target from users order by id'))
     rows = c.execute('select year, month, user_id, total from stats_total where category_id is null order by year desc, month desc, user_id asc')
