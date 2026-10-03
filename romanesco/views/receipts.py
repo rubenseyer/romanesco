@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 import warnings
 from flask import render_template, request, redirect, url_for, abort
-from ..model import users, categories, parse_receipt, Receipt, Item, stats_new_receipt, stats_update_receipt
+from ..model import users, categories, parse_receipt, Receipt, Item, stats_new_receipt, stats_delete_receipt, stats_update_receipt
 from .. import app, db
 
 
@@ -58,6 +58,7 @@ def receipt_edit(id):
                 stats_update_receipt(r_old, r)
             # fall out to return overview
         case 'DELETE':
+            stats_delete_receipt(r)
             Receipt.delete(id)
             # fall out to return overview
     return redirect(url_for('overview'), code=303)
