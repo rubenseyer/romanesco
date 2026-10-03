@@ -104,15 +104,14 @@ def category_transactions(user_ids: list[int], year: int, month: int, category_i
     return transactions
 
 
-def user_table() -> (list[str], list[tuple[str, list[Decimal]]]):
+def monthly_user_totals(user_ids: list[int], year: int, month: int):
     c = db.cursor()
-    users_rows = list(c.execute('select name, net, target from users order by id'))
-    rows = c.execute('select year, month, user_id, total from stats_total where category_id is null order by year desc, month desc, user_id asc')
-    table = [
-        (f'{year}.{month}',
-            list(dense(map(lambda x: (x[2], x[3]), totals), Decimal('0'), start=1, stop=len(users_rows) + 1)))
-        for (year, month), totals in groupby(rows, lambda x: x[:2])
-    ]
-    users, nets, targets = list(zip(*users_rows))
-    table.insert(0, ('-', nets))
-    return users, table, targets
+    if not user_ids:
+        return []
+    placeholders = ','.join('?' for _ in user_ids)
+    users_rows = list(c.execute(
+        f'select id, name from users where id in ({placeholders}) order by id', user_ids))
+    totals = dict(c.execute(
+        f'select user_id, total from stats_total where category_id is null and year = ? and month = ? '
+        f'and user_id in ({placeholders})', [year, month, *user_ids]))
+    return [(name, totals.get(user_id, Decimal('0'))) for user_id, name in users_rows]

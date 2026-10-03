@@ -1,16 +1,10 @@
-{% extends "_base.html" %}
-{% from "_stats_table.html" import gtable %}
-{% block title %}Statistik: användare &mdash; Romanesco{% endblock %}
-{% block body %}
-    <div>
-        {{ gtable('Period', users, statistics) }}
-    </div>
-    <div>
-        <form action="{{ url_for('stats_budget') }}" method=post enctype=multipart/form-data>
-            <label for="target">Budget</label>
-            <input type="text" id="target" name="target" pattern="[0-9]+(\.[0-9]+)?" required value="{{ target }}">
-            &nbsp;
-            <input type="submit" value="Submit">
-        </form>
-    </div>
-{% endblock body %}
+<table class="user-totals">
+    <thead>
+        <tr><th>Användare</th><th>Summa</th></tr>
+    </thead>
+    <tbody>
+        {% for user_name, total in totals %}
+            <tr><td>{{ user_name }}</td><td>{{ round(total) }}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>

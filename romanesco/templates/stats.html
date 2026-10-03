@@ -1,0 +1,99 @@
+{% extends "_base.html" %}
+{% block title %}Statistik: kategorier &mdash; Romanesco{% endblock %}
+{% block body %}
+    <div>
+        <table id="category-totals">
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th>Summa</th>
+                    {% for category_id, category_name in categories %}
+                        <th>{{ category_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for period, total, values in statistics %}
+                    {% set year, month = period.split('.')|map('int') %}
+                    <tr>
+                        <td>{{ period }}</td>
+                        <td>
+                            <button class="stats-detail" type="button"
+                                    data-title="Netton {{ period }}"
+                                    data-url="{{ url_for('stats_user_totals', year=year, month=month, id=query_user_id) }}">
+                                {{ round(total) }}
+                            </button>
+                        </td>
+                        {% for category_id, category_name in categories %}
+                            {% set value = values[loop.index0] %}
+                            <td>
+                                <button class="stats-detail" type="button"
+                                        data-title="{{ category_name }} {{ period }}"
+                                        data-url="{{ url_for('stats_category_transactions', year=year, month=month, category_id=category_id, id=query_user_id) }}">
+                                    {{ round(value) }}
+                                </button>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="stats-controls">
+            <form class="stats-user-picker" action="{{ url_for('stats') }}" method="get">
+                <label for="stats-users">Användare</label>
+                <select id="stats-users" name="id" multiple size="{{ [users|length, 4]|min }}">
+                    {% for user_id, user_name in users.items() %}
+                        <option value="{{ user_id }}"{% if user_id in selected_user_ids %} selected{% endif %}>{{ user_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Visa</button>
+            </form>
+            <form action="{{ url_for('stats_budget') }}" method="post">
+                <label for="target">Budget</label>
+                <input type="text" id="target" name="target" pattern="[0-9]+(\.[0-9]+)?" required value="{{ target if target is not none else '' }}">
+                <button type="submit">Spara</button>
+            </form>
+        </div>
+        <p class="stats-debug"><a href="{{ url_for('debug_stats_recompute') }}">Beräkna om allt (debug)</a></p>
+        <dialog id="stats-details" class="dialog" aria-labelledby="stats-details-title">
+            <div class="dialog-header">
+                <h2 id="stats-details-title"></h2>
+                <form method="dialog">
+                    <button class="dialog-close" type="submit" aria-label="Stäng">&times;</button>
+                </form>
+            </div>
+            <div class="dialog-content"></div>
+        </dialog>
+    </div>
+    <script>
+        const statsDialog = document.getElementById('stats-details');
+        const statsDetails = statsDialog.querySelector('.dialog-content');
+        const statsDialogTitle = document.getElementById('stats-details-title');
+
+        document.querySelectorAll('.stats-detail').forEach(button => {
+            button.addEventListener('click', async () => {
+                statsDialogTitle.textContent = button.dataset.title;
+                statsDetails.textContent = 'Hämtar detaljer...';
+                statsDialog.showModal();
+                button.disabled = true;
+                try {
+                    const response = await fetch(button.dataset.url);
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    statsDetails.innerHTML = await response.text();
+                } catch (error) {
+                    statsDetails.textContent = 'Detaljerna kunde inte hämtas.';
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
+
+        statsDialog.addEventListener('click', event => {
+            if (event.target === statsDialog) {
+                statsDialog.close();
+            }
+        });
+    </script>
+{% endblock body %}

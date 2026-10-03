@@ -195,7 +195,7 @@ th:first-child, td:first-child {
     text-align: left;
 }
 
-.category-total {
+.stats-detail {
     border: 0;
     background: transparent;
     color: inherit;
@@ -203,12 +203,25 @@ th:first-child, td:first-child {
     padding: 0;
     cursor: pointer;
 }
-.category-total:hover {
+.stats-detail:hover {
     text-decoration: underline;
     text-decoration-style: dotted;
 }
-.category-total:disabled { cursor: wait; }
-.category-transactions { font-size: .8rem; }
+.stats-detail:disabled { cursor: wait; }
+.stats-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.stats-user-picker {
+    align-items: start;
+    display: flex;
+    gap: .5rem;
+}
+.stats-user-picker select { min-width: 10rem; }
+.stats-debug { font-size: .7rem; margin-top: 2rem; }
+.category-transactions, .user-totals { font-size: .8rem; }
 
 .dialog {
     border: 0;
