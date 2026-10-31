@@ -1,11 +1,12 @@
 [project]
 name = "romanesco"
-version = "1.14.0"
+version = "1.14.1"
 description = "Expenses reporting system"
 urls = {repository = "https://github.com/rubenseyer/romanesco"}
 requires-python = ">=3.12"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "EUPL-1.2"
+license-files = ["LICENSE"]
 dependencies = [
   "Flask ~= 3.1",
   "pdfminer.six >= 20231228"
