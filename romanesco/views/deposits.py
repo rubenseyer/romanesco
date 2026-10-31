@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import render_template, request, redirect, url_for
 from ..model import users, new_deposit, stats_new_deposit
 from ..model.deposits import deposit_history
-from .. import app
+from .. import app, db
 from .util import selected_user_ids
 
 
@@ -37,8 +37,9 @@ def deposits():
             except InvalidOperation:
                 error = 'Fel: felaktig summa'
         if error is None:
-            new_deposit(user_id, timestamp, amount, request.form.get('comment', ''))
-            stats_new_deposit(user_id, amount)
+            with db.transaction():
+                new_deposit(user_id, timestamp, amount, request.form.get('comment', ''))
+                stats_new_deposit(user_id, amount)
             return redirect(url_for('deposits', id=user_ids), code=303)
 
     history = deposit_history(user_ids)
