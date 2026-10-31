@@ -16,12 +16,18 @@ def stats():
     all_users = users()
     all_user_ids = selected_user_ids(all_users)
     cats, table = category_table(all_user_ids[0])
+    totals_by_period = {header: (total, values) for header, total, values in table}
     for user_id in all_user_ids[1:]:
         _, table_new = category_table(user_id)
-        table = [
-            (header, sum1+sum2, [c1+c2 for c1, c2 in zip(cols1, cols2)])
-            for (header, sum1, cols1), (_, sum2, cols2) in zip(table, table_new)
-        ]
+        for header, total, values in table_new:
+            previous_total, previous_values = totals_by_period.get(header, (0, [0] * len(cats)))
+            totals_by_period[header] = (
+                previous_total + total,
+                [previous + value for previous, value in zip(previous_values, values)])
+    table = [
+        (header, *totals_by_period[header])
+        for header in sorted(totals_by_period, key=lambda value: tuple(map(int, value.split('.'))), reverse=True)
+    ]
     return render_template('stats.html', categories=cats, statistics=table,
                            users=all_users, selected_user_ids=all_user_ids,
                            query_user_id=','.join(str(user_id) for user_id in all_user_ids))
