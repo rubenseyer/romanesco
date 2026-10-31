@@ -7,9 +7,9 @@
             <div><span class="amount">{{ current_month }}</span>&nbsp;<span class="currency">kr</span></div>
         </div>
         <div>
-            {% if target is not none %}
-            <div>Kvar i budget</div>
-            <div><span class="amount {{ 'red' if target < current_month else '' }}">{{ target - current_month }}</span>&nbsp;<span class="currency">kr</span></div>
+            {% if average is not none %}
+            <div>Snitt senaste {{ average_periods }} {{ 'perioden' if average_periods == 1 else 'perioderna' }}</div>
+            <div><span class="amount">{{ average }}</span>&nbsp;<span class="currency">kr</span></div>
             {% endif %}
         </div>
         <div>

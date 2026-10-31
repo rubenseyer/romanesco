@@ -6,12 +6,13 @@ from tabulate import tabulate
 
 from .. import app, db
 from ..model.statistics.update import period
+from ..model.statistics.get import recent_period_average
 from ..util import round_even
 
 
 def notify_totals(cfg, smtp):
     c = db.cursor()
-    users = list(c.execute('select id, name, net, email, target from users where email is not null order by id'))
+    users = list(c.execute('select id, name, net, email from users where email is not null order by id'))
     period_year, period_month = period(datetime.today())
     if period_month == 1:
         period_year, period_month = period_year - 1, 12
@@ -19,7 +20,7 @@ def notify_totals(cfg, smtp):
         period_month -= 1
     when = date(period_year, period_month, 1)
 
-    for user_id, name, net, email, target in users:
+    for user_id, name, net, email in users:
         totals = {
             category_id: (name, total)
             for category_id, name, total in c.execute('''\
@@ -31,7 +32,18 @@ def notify_totals(cfg, smtp):
                 (user_id, period_year, period_month)
             )
         }
-        delta = round_even(totals[None][1] - target) if target is not None else 0
+
+        average, average_periods = recent_period_average(
+            user_id, datetime(period_year, period_month, 1))
+        comparison = ''
+        if average is not None:
+            delta = round_even(totals[None][1] - average)
+            periods_label = 'perioden' if average_periods == 1 else 'perioderna'
+            periods_article = 'den' if average_periods == 1 else 'de'
+            difference = (f'{abs(delta)} kr {"mer" if delta > 0 else "mindre"} än'
+                          if delta != 0 else 'lika mycket som')
+            comparison = (f'Det är {difference} snittet på {average} kr '
+                          f'för {periods_article} {average_periods} föregående {periods_label}.')
 
         stats_table_raw = [
             [name, round_even(total)]
@@ -42,8 +54,8 @@ def notify_totals(cfg, smtp):
         plain = f'''\
 Hej {name}!
         
-Förra månaden spenderade du {totals[None][1]} kr.
-Det är {abs(delta)} kr {"mer" if delta < 0 else "mindre"} än budget.
+Förra perioden spenderade du {totals[None][1]} kr.
+{comparison}
 Ditt tillgodo är därmed {net} kr.
        
 Detaljerad statistik:
@@ -56,8 +68,8 @@ Detaljerad statistik:
 <body>
 <p>Hej {name}!</p>
 <p>
-Förra månaden spenderade du <strong>{totals[None][1]} kr</strong>.<br>
-Det är {abs(delta)} kr {"mer" if delta < 0 else "mindre"} än budget.<br>
+Förra perioden spenderade du <strong>{totals[None][1]} kr</strong>.<br>
+{comparison + '<br>' if comparison else ''}
 Ditt tillgodo är därmed <strong>{net} kr</strong>.
 </p>
 <p>

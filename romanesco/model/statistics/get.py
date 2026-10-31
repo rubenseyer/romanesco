@@ -6,7 +6,6 @@ from itertools import groupby
 
 from ...util import dense
 from .update import period
-from .util_dateocc import date_occurrences
 
 from ... import app
 from .. import db
@@ -17,11 +16,11 @@ def stats_overview(user_id: int):
     c = db.cursor()
     today = datetime.today()
 
-    # Net and target
-    row = c.execute('select net, target from users where id = ?', (user_id,)).fetchone()
+    # Net balance
+    row = c.execute('select net from users where id = ?', (user_id,)).fetchone()
     if row is None:
         raise LookupError(f'could not find user {user_id}')
-    net, target = floor(row[0]), floor(row[1]) if row[1] is not None else None
+    net = floor(row[0])
 
     # Current month total
     row = c.execute(
@@ -37,24 +36,20 @@ def stats_overview(user_id: int):
     )
     category_stats = {row[0]: floor(row[1]) for row in rows}
 
-    return current_month, target, net, sorted(category_stats.items(), key=lambda x: -x[1])
+    average, average_periods = recent_period_average(user_id, today)
+    return current_month, average, average_periods, net, sorted(category_stats.items(), key=lambda x: -x[1])
 
 
-def _avg_this_day(c: 'db.Cursor', user_id: int, category_id: Optional[int], now: datetime):
-    row = c.execute('select timestamp from receipts order by timestamp asc limit 1').fetchone()
-    if row is None:
-        return 0
-    epoch = datetime.fromtimestamp(row[0])
-
-    tots = {
-        row[0]: row[1]
-        for row in c.execute(
-            'select day, total from stats_days where user_id = ? and (category_id is not distinct from ?) and day <= ? order by day',
-            (user_id, category_id, now.day)
-        )
-    }
-    denoms = date_occurrences(epoch.date(), now.date())
-    return floor(sum(tots[k]/denoms[k] for k in tots.keys()))
+def recent_period_average(user_id: int, today: datetime) -> tuple[Optional[int], int]:
+    year, month = period(today)
+    row = db.cursor().execute(
+        'select avg(total), count(*) from ('
+        'select total from stats_total '
+        'where user_id = ? and category_id is null '
+        'and (year < ? or (year = ? and month < ?)) '
+        'order by year desc, month desc limit 3) as recent_periods',
+        (user_id, year, year, month)).fetchone()
+    return (floor(row[0]) if row[0] is not None else None), row[1]
 
 
 def category_table(user_id: int) -> (list[str], list[tuple[str, Decimal, list[Decimal]]]):

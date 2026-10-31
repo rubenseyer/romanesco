@@ -48,11 +48,6 @@
                 </select>
                 <button type="submit">Visa</button>
             </form>
-            <form action="{{ url_for('stats_budget') }}" method="post">
-                <label for="target">Budget</label>
-                <input type="text" id="target" name="target" pattern="[0-9]+(\.[0-9]+)?" required value="{{ target if target is not none else '' }}">
-                <button type="submit">Spara</button>
-            </form>
         </div>
         <p class="stats-debug"><a href="{{ url_for('debug_stats_recompute') }}">Beräkna om allt (debug)</a></p>
         <dialog id="stats-details" class="dialog" aria-labelledby="stats-details-title">
