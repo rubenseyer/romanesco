@@ -47,7 +47,7 @@
         <p class="infinite-scroll-error">Fel vid hämtning av händelser</p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/infinite-scroll@5/dist/infinite-scroll.pkgd.min.js"></script>
+    <script src="{{ url_for('static', filename='infinite-scroll.pkgd.min.js') }}"></script>
     <script>
         'use strict'
         const log = document.getElementById('log')
