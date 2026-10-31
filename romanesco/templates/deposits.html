@@ -1,0 +1,74 @@
+{% extends "_base.html" %}
+{% block title %}Insättningar &mdash; Romanesco{% endblock %}
+{% block body %}
+    <div>
+        <h1>Insättningar</h1>
+        <h2>Ny insättning</h2>
+        <form action="{{ url_for('deposits', id=selected_user_ids) }}" method="post">
+            <label for="user_id">Användare</label>
+            <select id="user_id" name="user_id" required>
+                {% for id, name in users.items() %}
+                <option value="{{ id }}" {{ 'selected' if id == g.user_id }}>{{ name }}</option>
+                {% endfor %}
+            </select>
+            <br>
+            <label for="comment">Beskrivning</label>
+            <input type="text" id="comment" name="comment" value="">
+            <br>
+            <label for="timestamp">Datum</label>
+            <input type="datetime-local" id="timestamp" name="timestamp" value="{{ now().strftime('%Y-%m-%dT%H:%M:00') }}" required>
+            <br>
+            <label for="amount">Summa</label>
+            <input type="text" id="amount" name="amount" pattern="-?[0-9]+(\.[0-9]+)?" required>
+            <br>
+            <input type="submit" value="Spara">
+        </form>
+        {% if error %}
+        <div class="red">{{ error }}</div>
+        {% endif %}
+        <h2>Historik</h2>
+        <div class="deposits-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Datum</th>
+                        <th scope="col">Användare</th>
+                        <th scope="col">Summa (kr)</th>
+                        <th scope="col">Beskrivning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for timestamp, name, amount, comment in deposits %}
+                    <tr>
+                        <td>{{ timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ name }}</td>
+                        <td>{{ '%.2f'|format(amount) }}</td>
+                        <td>{{ comment or '' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">Inga insättningar för valda användare.</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th scope="row" colspan="2">Totalt</th>
+                        <td>{{ '%.2f'|format(total) }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="stats-controls">
+            <form class="stats-user-picker" action="{{ url_for('deposits') }}" method="get">
+                <label for="deposit-users">Användare</label>
+                <select id="deposit-users" name="id" multiple size="{{ [users|length, 4]|min }}">
+                    {% for user_id, user_name in users.items() %}
+                    <option value="{{ user_id }}"{% if user_id in selected_user_ids %} selected{% endif %}>{{ user_name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Visa</button>
+            </form>
+            <a href="{{ url_for('overview') }}">Till översikten</a>
+        </div>
+    </div>
+{% endblock %}

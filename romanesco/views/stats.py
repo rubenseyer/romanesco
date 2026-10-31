@@ -3,6 +3,7 @@ from flask import g, redirect, url_for, render_template, abort, request
 from ..model import users
 from ..model.statistics import stats_full_recompute, stats_overview, category_table, monthly_user_totals, target_set, category_transactions
 from .. import app
+from .util import selected_user_ids
 
 
 @app.route('/debug/stats_recompute')
@@ -14,13 +15,7 @@ def debug_stats_recompute():
 @app.route('/stats')
 def stats():
     all_users = users()
-    query_user_id = request.args.getlist('id')
-    try:
-        all_user_ids = [int(user_id) for value in query_user_id for user_id in value.split(',')] or [g.user_id]
-    except ValueError:
-        abort(400)
-    if not all_user_ids or any(user_id not in all_users for user_id in all_user_ids):
-        abort(400)
+    all_user_ids = selected_user_ids(all_users)
     cats, table = category_table(all_user_ids[0])
     for user_id in all_user_ids[1:]:
         _, table_new = category_table(user_id)

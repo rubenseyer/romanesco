@@ -221,6 +221,9 @@ th:first-child, td:first-child {
 }
 .stats-user-picker select { min-width: 10rem; }
 .stats-debug { font-size: .7rem; margin-top: 2rem; }
+.deposits-table { overflow-x: auto; }
+.deposits-table td:nth-child(2), .deposits-table td:nth-child(4) { text-align: left; }
+.deposits-table td:first-child { white-space: nowrap; }
 .category-transactions, .user-totals { font-size: .8rem; }
 
 .dialog {
