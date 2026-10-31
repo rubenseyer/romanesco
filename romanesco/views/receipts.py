@@ -1,6 +1,6 @@
 from io import BufferedReader
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import warnings
 from flask import render_template, request, redirect, url_for, abort
 from ..model import users, categories, parse_receipt, Receipt, Item, stats_new_receipt, stats_delete_receipt, stats_update_receipt
@@ -75,9 +75,12 @@ def receipt_upload():
     if not file.filename:
         # empty part with filename; no file submitted (in some browsers)
         return render_template('receipt_upload.html', error='Fel: ingen fil')
-    with warnings.catch_warnings(record=True) as ws:
-        receipt = parse_receipt(BufferedReader(file))
-        alerts = [w.message for w in ws]
+    try:
+        with warnings.catch_warnings(record=True) as ws:
+            receipt = parse_receipt(BufferedReader(file))
+            alerts = [w.message for w in ws]
+    except InvalidOperation:
+        return render_template('receipt_upload.html', error='Fel: felaktigt tal i kvittot')
     return render_template('receipt_edit.html',
                            receipt=receipt, committed=False,
                            users=users(), categories=categories(), alerts=alerts)
@@ -95,8 +98,15 @@ def receipt_copy(id):
 
 def _process_items_json(r: Receipt, items_json: list):
     for ix, item in enumerate(items_json):
+        try:
+            quantity = Decimal(item['quantity'])
+            price = Decimal(item['price'])
+            if not quantity.is_finite() or not price.is_finite():
+                raise InvalidOperation
+        except (InvalidOperation, ValueError, TypeError, KeyError):
+            abort(400, description='Fel: felaktigt antal eller pris')
         if item['id'] is None:
-            item_obj = Item.from_data(None, item['name'], Decimal(item['quantity']), Decimal(item['price']), item['ean'], item['splits'], item['category'])
+            item_obj = Item.from_data(None, item['name'], quantity, price, item['ean'], item['splits'], item['category'])
         else:
-            item_obj = Item.get(item['id'], Decimal(item['quantity']), Decimal(item['price']))
+            item_obj = Item.get(item['id'], quantity, price)
         r.add_item(item_obj, ix)

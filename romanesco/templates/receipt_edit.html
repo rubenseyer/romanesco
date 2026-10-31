@@ -72,6 +72,7 @@
                 {% endif %}
             </div>
         </form>
+        <div id="receipt-error" class="red" role="alert"></div>
     </div>
     <div id="dom-templates">
         <div role="group" data-id="" data-ean="">
@@ -123,13 +124,25 @@
             }))
             data.deletedItems = committed ? [...items.querySelectorAll('div[role=group].struck, div[role=group].dirty')].map(item => item.dataset.id) : []
 
+            const error = document.getElementById('receipt-error')
+            error.textContent = ''
             fetch(form.action, {
                 credentials: 'same-origin',
                 mode: 'same-origin',
                 method: form.method,
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
-            }).then(response => window.location = response.url)
+            }).then(response => {
+                if (!response.ok) {
+                    error.textContent = response.status === 400
+                        ? 'Fel: kontrollera kvittots uppgifter, antal och priser'
+                        : 'Fel: kvittot kunde inte sparas'
+                    return
+                }
+                window.location = response.url
+            }).catch(() => {
+                error.textContent = 'Fel: kvittot kunde inte sparas'
+            })
         })
 
         document.getElementById('new-item').addEventListener('click', e => {
