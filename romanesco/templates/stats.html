@@ -49,6 +49,7 @@
                 <button type="submit">Visa</button>
             </form>
         </div>
+        <p><a href="{{ url_for('stats_export', id=query_user_id) }}">Exportera (CSV)</a></p>
         <p class="stats-debug"><a href="{{ url_for('debug_stats_recompute') }}">Beräkna om allt (debug)</a></p>
         <dialog id="stats-details" class="dialog" aria-labelledby="stats-details-title">
             <div class="dialog-header">
